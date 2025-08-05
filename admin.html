@@ -129,32 +129,35 @@ function uploadImageForVIN(vin) {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
+  input.multiple = true; // 支持多选
   input.onchange = async () => {
-    const file = input.files[0];
-    if (!file) return;
+    const files = input.files;
+    if (!files || files.length === 0) return;
 
-    // 自动编号：查现有的张数，然后+1 命名
-    const suffix = Date.now(); // 或你可以自定义 1、2、3 编号逻辑
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', upload_preset);
-    formData.append('public_id', vin + suffix); // 确保唯一
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', 'car_inventory');
+      formData.append('public_id', `${vin}/${file.name}`); // 按 VIN 文件夹分类，保持原文件名
 
-    try {
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`, {
-        method: 'POST',
-        body: formData
-      });
-      const data = await res.json();
-      if (data.secure_url) {
-        alert('上传成功: ' + data.original_filename);
-      } else {
-        alert('上传失败');
+      try {
+        const res = await fetch('https://api.cloudinary.com/v1_1/你的cloud_name/image/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data.secure_url) {
+          console.log('上传成功:', data.secure_url);
+        } else {
+          console.error('上传失败:', data);
+        }
+      } catch (err) {
+        console.error('上传异常:', err);
       }
-    } catch (err) {
-      alert('上传异常');
-      console.error(err);
     }
+
+    alert(`✅ 上传完成，共上传 ${files.length} 张图`);
   };
   input.click();
 }
