@@ -1,0 +1,104 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SJAuto Inventory</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #f0c14b;
+      font-family: 'Helvetica Neue', sans-serif;
+      margin: 2rem;
+    }
+    h1 {
+      color: #f0c14b;
+    }
+    .car-card {
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      background-color: #1e1e1e;
+      color: white;
+      max-width: 700px;
+      transition: opacity 0.3s;
+    }
+    .car-card.hold {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    .car-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #f0c14b;
+    }
+    .car-detail {
+      margin-bottom: 0.25rem;
+    }
+    .carfax-link {
+      margin-top: 0.5rem;
+      display: inline-block;
+      color: #f0c14b;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>SJAuto Vehicle Inventory</h1>
+  <div id="car-list">Loading...</div>
+
+  <script>
+    const apiKey = "AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc";
+    const sheetId = "1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs";
+    const sheetRange = "Sheet1";
+
+    async function fetchSheetData() {
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetRange}?key=${apiKey}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      return data.values;
+    }
+
+    function renderCars(rows) {
+      const container = document.getElementById("car-list");
+      container.innerHTML = "";
+
+      const headers = rows[0];
+      const cars = rows.slice(1);
+
+      cars.forEach(row => {
+        const car = {};
+        headers.forEach((header, i) => car[header] = row[i] || "");
+
+        if ((car["Status"] || "").toLowerCase() === "deleted") return;
+        if ((car["Status"] || "").toLowerCase() === "sold") return;
+
+        const card = document.createElement("div");
+        card.className = "car-card";
+        if ((car["Status"] || "").toLowerCase() === "hold") {
+          card.classList.add("hold");
+        }
+
+        card.innerHTML = `
+          <div class="car-title">${car["品牌"] || car["Brand"]} ${car["车型"] || car["Model"]} (${car["年份"] || car["Year"]})</div>
+          <div class="car-detail">公里数: ${car["公里数"] || car["Mileage"]} km</div>
+          <div class="car-detail">颜色: ${car["颜色"] || car["Color"]}</div>
+          <div class="car-detail">价格: $${car["价格"] || car["Price"]}</div>
+          ${
+            car["Carfax"]
+              ? `<a class="carfax-link" href="${car["Carfax"]}" target="_blank">查看Carfax报告</a>`
+              : ""
+          }
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    fetchSheetData().then(renderCars).catch(err => {
+      document.getElementById("car-list").innerText = "加载失败：" + err;
+      console.error(err);
+    });
+  </script>
+</body>
+</html>
