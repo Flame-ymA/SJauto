@@ -1,64 +1,70 @@
-<!DOCTYPE html>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SJ Auto Inventory Admin Panel</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SJ Auto Admin</title>
   <style>
     body {
-      background-color: #111;
-      color: gold;
       font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
+      background-color: #000;
+      color: #ffd700;
+      padding: 20px;
     }
-    header {
-      background-color: gold;
-      color: black;
-      padding: 10px;
+    h1 {
       text-align: center;
-      font-size: 24px;
-      font-weight: bold;
+      color: #ffd700;
+    }
+    .upload-section {
+      text-align: center;
+      margin-bottom: 20px;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      background-color: #111;
     }
     th, td {
-      padding: 10px;
-      border: 1px solid gold;
+      padding: 12px;
       text-align: center;
+      border: 1px solid #333;
     }
     th {
       background-color: #222;
+      color: #ffd700;
     }
-    tr:nth-child(even) {
-      background-color: #333;
+    td {
+      color: #fff;
     }
-    .btn {
-      padding: 5px 10px;
+    button {
+      background-color: #ffd700;
+      color: #000;
       border: none;
-      background-color: gold;
-      color: black;
+      padding: 8px 12px;
       cursor: pointer;
+      border-radius: 5px;
     }
-    .btn:hover {
-      background-color: #ffc107;
+    button:hover {
+      background-color: #e6c200;
+    }
+    input[type="file"] {
+      margin-right: 10px;
     }
   </style>
 </head>
 <body>
-  <header>SJ Auto Inventory Admin Panel</header>
-
-  <input type="file" id="excelFile" />
-  <button class="btn" onclick="uploadExcel()">上传并加载表格</button>
-
+  <h1>SJ Auto Inventory Admin</h1>
+  <div class="upload-section">
+    <input type="file" id="excelFile" />
+    <button onclick="uploadExcel()">上传并加载表格</button>
+  </div>
   <table id="dataTable">
     <thead>
       <tr>
-        <th>Year</th><th>Make</th><th>Model</th><th>Mileage</th><th>Color</th><th>Price</th><th>Accident</th><th>Status</th><th>VIN</th><th>Upload</th><th>Delete</th>
+        <th>Year</th><th>Make</th><th>Model</th><th>Mileage</th><th>Color</th>
+        <th>Price</th><th>Accident</th><th>Status</th><th>VIN</th>
+        <th>Upload</th><th>Delete</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -85,19 +91,25 @@
             });
             const vin = row[8];
             const uploadBtn = document.createElement('button');
-            uploadBtn.className = 'btn';
             uploadBtn.textContent = 'Upload';
             uploadBtn.onclick = () => alert('上传图片绑定 VIN: ' + vin);
 
             const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'btn';
             deleteBtn.textContent = 'Delete';
             deleteBtn.onclick = () => alert('将删除 VIN: ' + vin);
 
-            tr.appendChild(uploadBtn);
-            tr.appendChild(deleteBtn);
+            const uploadTd = document.createElement('td');
+            uploadTd.appendChild(uploadBtn);
+            const deleteTd = document.createElement('td');
+            deleteTd.appendChild(deleteBtn);
+
+            tr.appendChild(uploadTd);
+            tr.appendChild(deleteTd);
             tbody.appendChild(tr);
           });
+        })
+        .catch(err => {
+          console.error('读取表格失败', err);
         });
     }
 
