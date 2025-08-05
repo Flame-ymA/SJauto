@@ -2,80 +2,62 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SJ Auto Used Cars</title>
+  <title>SJ Auto Inventory</title>
   <style>
-    body { font-family: sans-serif; margin: 0; background: #f5f5f5; padding: 1rem; }
-    h1 { text-align: center; color: #333; }
-    .container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 1rem;
+    body { font-family: sans-serif; margin: 2rem; }
+    .car-card {
+      border: 1px solid #ccc; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;
+      box-shadow: 0 0 8px rgba(0,0,0,0.05); max-width: 600px;
     }
-    .card {
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      padding: 1rem;
-      width: 300px;
-    }
-    .card h2 {
-      margin: 0.5rem 0;
-    }
-    .card p {
-      margin: 0.3rem 0;
-    }
-    .carfax {
-      margin-top: 0.5rem;
-    }
-    .carfax a {
-      color: #007bff;
-      text-decoration: none;
-    }
+    .car-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem; }
+    .car-detail { margin-bottom: 0.25rem; }
+    .carfax-link { margin-top: 0.5rem; display: inline-block; color: blue; text-decoration: underline; }
   </style>
 </head>
 <body>
-  <h1>🚗 SJ Auto Inventory</h1>
-  <div class="container" id="car-list"></div>
+  <h1>SJ Auto Inventory</h1>
+  <div id="car-list">Loading...</div>
 
   <script>
-    async function loadSheetData() {
-      const sheetId = "1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs";
-      const sheetName = "Sheet1";
-      const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetName}?key=AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc`;
+    const apiKey = "AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc";
+    const sheetId = "1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs";
+    const sheetRange = "Sheet1";
 
+    async function fetchSheetData() {
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetRange}?key=${apiKey}`;
       const res = await fetch(url);
       const data = await res.json();
+      return data.values;
+    }
 
-      const rows = data.values;
-      const headers = rows[0];
-      const cars = rows.slice(1).map(row => {
-        let obj = {};
-        headers.forEach((key, i) => obj[key] = row[i] || "");
-        return obj;
-      });
-
+    function renderCars(rows) {
       const container = document.getElementById("car-list");
       container.innerHTML = "";
 
-      cars.forEach(car => {
-        const div = document.createElement("div");
-        div.className = "card";
-        div.innerHTML = `
-          <h2>${car["Year"]} ${car["Make"]} ${car["Model"]}</h2>
-          <p><strong>Mileage:</strong> ${car["Mileage"]} km</p>
-          <p><strong>Color:</strong> ${car["Color"]}</p>
-          <p><strong>Price:</strong> $${car["Price"]}</p>
-          <div class="carfax">
-            ${car["Accident History"].startsWith("http") ? `<a href="${car["Accident History"]}" target="_blank">View Carfax Report</a>` : ""}
-          </div>
+      const headers = rows[0];
+      const cars = rows.slice(1);
+
+      cars.forEach(row => {
+        const car = {};
+        headers.forEach((header, i) => car[header] = row[i] || "");
+
+        const card = document.createElement("div");
+        card.className = "car-card";
+        card.innerHTML = `
+          <div class="car-title">${car["品牌"] || car["Brand"]} ${car["车型"] || car["Model"]} (${car["年份"] || car["Year"]})</div>
+          <div class="car-detail">公里数: ${car["公里数"] || car["Mileage"]} km</div>
+          <div class="car-detail">颜色: ${car["颜色"] || car["Color"]}</div>
+          <div class="car-detail">价格: $${car["价格"] || car["Price"]}</div>
+          ${car["Carfax"] ? `<a class="carfax-link" href="${car["Carfax"]}" target="_blank">查看Carfax报告</a>` : ""}
         `;
-        container.appendChild(div);
+        container.appendChild(card);
       });
     }
 
-    loadSheetData();
+    fetchSheetData().then(renderCars).catch(err => {
+      document.getElementById("car-list").innerText = "加载失败：" + err;
+      console.error(err);
+    });
   </script>
 </body>
 </html>
