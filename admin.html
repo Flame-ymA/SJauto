@@ -133,10 +133,12 @@ function uploadImageForVIN(vin) {
     const file = input.files[0];
     if (!file) return;
 
+    // 自动编号：查现有的张数，然后+1 命名
+    const suffix = Date.now(); // 或你可以自定义 1、2、3 编号逻辑
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', upload_preset); // ✅ Cloudinary preset
-    formData.append('public_id', vin); // ✅ 用 VIN 命名
+    formData.append('upload_preset', upload_preset);
+    formData.append('public_id', vin + suffix); // 确保唯一
 
     try {
       const res = await fetch(`https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`, {
@@ -144,19 +146,13 @@ function uploadImageForVIN(vin) {
         body: formData
       });
       const data = await res.json();
-      console.log('Cloudinary 返回数据：', data);  // ✅ 打印完整结果方便调试
-
       if (data.secure_url) {
-        if (data.public_id === vin) {
-          alert('✅ 上传成功，图片命名正确：' + vin);
-        } else {
-          alert(`⚠️ 上传成功，但命名异常：返回的 public_id 为 ${data.public_id}`);
-        }
+        alert('上传成功: ' + data.original_filename);
       } else {
-        alert('❌ 上传失败：' + (data.error?.message || '未知错误'));
+        alert('上传失败');
       }
     } catch (err) {
-      alert('🚨 上传异常：' + err.message);
+      alert('上传异常');
       console.error(err);
     }
   };
