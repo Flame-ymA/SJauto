@@ -124,6 +124,43 @@
     }
 
     loadSheet();
+     // ===== 以下为新增功能：上传照片至 Cloudinary =====
+    function uploadImage(vin) {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.multiple = true;
+      input.onchange = () => {
+        const files = Array.from(input.files);
+        files.forEach((file, index) => {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('upload_preset', 'car'); // 你在 Cloudinary 配置的 preset 名称
+          formData.append('public_id', `${vin}${index + 1}`);
+
+          fetch('https://api.cloudinary.com/v1_1/duwckagtg/image/upload', {
+            method: 'POST',
+            body: formData
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.secure_url) {
+              alert(`上传成功: ${data.public_id}`);
+            } else {
+              alert('上传失败');
+              console.log(data);
+            }
+          })
+          .catch(err => {
+            alert('上传失败：' + err.message);
+            console.error(err);
+          });
+        });
+      };
+      input.click();
+    }
+    // ===== 以上为新增功能：上传照片至 Cloudinary =====
+
   </script>
 </body>
 </html>
