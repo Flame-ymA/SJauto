@@ -1,63 +1,59 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>SJ Auto Inventory</title>
-  <style>
-    body { font-family: sans-serif; margin: 2rem; }
-    .car-card {
-      border: 1px solid #ccc; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;
-      box-shadow: 0 0 8px rgba(0,0,0,0.05); max-width: 600px;
-    }
-    .car-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem; }
-    .car-detail { margin-bottom: 0.25rem; }
-    .carfax-link { margin-top: 0.5rem; display: inline-block; color: blue; text-decoration: underline; }
-  </style>
+  <title>SJAuto Vehicle Showcase</title>
+  
+<style>
+  body {
+    background-color: #121212;
+    color: #f0c14b;
+    font-family: 'Helvetica Neue', sans-serif;
+    margin: 0;
+    padding: 20px;
+  }
+  h1, h2 {
+    color: #f0c14b;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #1e1e1e;
+    color: white;
+    border: 1px solid #444;
+  }
+  th, td {
+    padding: 12px;
+    border: 1px solid #444;
+    text-align: center;
+  }
+  th {
+    background-color: #2c2c2c;
+    color: #f0c14b;
+  }
+  button {
+    background-color: #f0c14b;
+    color: #121212;
+    border: none;
+    padding: 10px 15px;
+    margin: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  button:hover {
+    background-color: #d4a427;
+  }
+</style>
+
 </head>
 <body>
-  <h1>SJ Auto Inventory</h1>
-  <div id="car-list">Loading...</div>
-
+  <h1>Welcome to SJAuto</h1>
+  <p>Explore our luxury used vehicles below:</p>
+  <div id="car-list">Loading vehicles...</div>
   <script>
-    const apiKey = "AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc";
-    const sheetId = "1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs";
-    const sheetRange = "Sheet1";
-
-    async function fetchSheetData() {
-      const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetRange}?key=${apiKey}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      return data.values;
-    }
-
-    function renderCars(rows) {
-      const container = document.getElementById("car-list");
-      container.innerHTML = "";
-
-      const headers = rows[0];
-      const cars = rows.slice(1);
-
-      cars.forEach(row => {
-        const car = {};
-        headers.forEach((header, i) => car[header] = row[i] || "");
-
-        const card = document.createElement("div");
-        card.className = "car-card";
-        card.innerHTML = `
-          <div class="car-title">${car["品牌"] || car["Brand"]} ${car["车型"] || car["Model"]} (${car["年份"] || car["Year"]})</div>
-          <div class="car-detail">公里数: ${car["公里数"] || car["Mileage"]} km</div>
-          <div class="car-detail">颜色: ${car["颜色"] || car["Color"]}</div>
-          <div class="car-detail">价格: $${car["价格"] || car["Price"]}</div>
-          ${car["Carfax"] ? `<a class="carfax-link" href="${car["Carfax"]}" target="_blank">查看Carfax报告</a>` : ""}
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    fetchSheetData().then(renderCars).catch(err => {
-      document.getElementById("car-list").innerText = "加载失败：" + err;
-      console.error(err);
-    });
+    // Frontend script to dynamically load car data from Google Sheets
   </script>
 </body>
 </html>

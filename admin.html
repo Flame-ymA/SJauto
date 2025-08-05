@@ -1,39 +1,69 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Admin Panel</title>
+  <title>Admin Panel - SJAuto</title>
+  
+<style>
+  body {
+    background-color: #121212;
+    color: #f0c14b;
+    font-family: 'Helvetica Neue', sans-serif;
+    margin: 0;
+    padding: 20px;
+  }
+  h1, h2 {
+    color: #f0c14b;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #1e1e1e;
+    color: white;
+    border: 1px solid #444;
+  }
+  th, td {
+    padding: 12px;
+    border: 1px solid #444;
+    text-align: center;
+  }
+  th {
+    background-color: #2c2c2c;
+    color: #f0c14b;
+  }
+  button {
+    background-color: #f0c14b;
+    color: #121212;
+    border: none;
+    padding: 10px 15px;
+    margin: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  button:hover {
+    background-color: #d4a427;
+  }
+</style>
+
 </head>
 <body>
-  <h1>Upload Excel to Google Sheets</h1>
-  <input type="file" id="fileInput" />
-  <button id="uploadBtn">Upload</button>
-
+  <h1>Admin Panel</h1>
+  <input type="file" id="excelUpload" />
+  <button onclick="uploadExcel()">Upload Excel</button>
+  <div id="status"></div>
+  <table id="adminTable">
+    <thead>
+      <tr>
+        <th>#</th><th>Year</th><th>Make</th><th>Model</th><th>Mileage</th>
+        <th>Color</th><th>Price</th><th>Accident</th><th>Upload</th><th>Delete</th><th>Hold</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
   <script>
-    document.getElementById("uploadBtn").addEventListener("click", async () => {
-      const fileInput = document.getElementById("fileInput");
-      const file = fileInput.files[0];
-      if (!file) {
-        alert("Please select a file.");
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      try {
-        const res = await fetch("https://flameauto-write.onrender.com/upload", {
-          method: "POST",
-          body: formData
-        });
-
-        const result = await res.json();
-        alert(result.message || result.error || "Upload complete");
-      } catch (err) {
-        console.error("Upload failed:", err);
-        alert("Upload failed");
-      }
-    });
+    // Script will go here
   </script>
 </body>
 </html>
