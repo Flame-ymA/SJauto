@@ -124,8 +124,7 @@
         alert('上传失败');
       });
     }
-
-// ===== 以下为新增功能：上传图片到 Cloudinary =====
+//上传图片
 function uploadImageForVIN(vin) {
   const input = document.createElement('input');
   input.type = 'file';
@@ -136,22 +135,28 @@ function uploadImageForVIN(vin) {
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', 'car_inventory'); // ✅ 你的 Cloudinary preset
+    formData.append('upload_preset', upload_preset); // ✅ Cloudinary preset
     formData.append('public_id', vin); // ✅ 用 VIN 命名
 
     try {
-      const res = await fetch('https://api.cloudinary.com/v1_1/daz8hmu8w/image/upload', {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`, {
         method: 'POST',
         body: formData
       });
       const data = await res.json();
+      console.log('Cloudinary 返回数据：', data);  // ✅ 打印完整结果方便调试
+
       if (data.secure_url) {
-        alert('上传成功: ' + data.original_filename);
+        if (data.public_id === vin) {
+          alert('✅ 上传成功，图片命名正确：' + vin);
+        } else {
+          alert(`⚠️ 上传成功，但命名异常：返回的 public_id 为 ${data.public_id}`);
+        }
       } else {
-        alert('上传失败');
+        alert('❌ 上传失败：' + (data.error?.message || '未知错误'));
       }
     } catch (err) {
-      alert('上传异常');
+      alert('🚨 上传异常：' + err.message);
       console.error(err);
     }
   };
