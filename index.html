@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>二手车展示页</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    header {
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 1rem 0;
+    }
+    .car-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .car-card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      margin: 1rem;
+      padding: 1rem;
+      width: 300px;
+    }
+    .car-card img {
+      width: 100%;
+      border-radius: 5px;
+    }
+    .car-card h3 {
+      margin: 0.5rem 0 0;
+    }
+    .car-card p {
+      margin: 0.2rem 0;
+    }
+    footer {
+      text-align: center;
+      padding: 1rem;
+      background: #333;
+      color: white;
+    }
+    .contact-buttons a {
+      display: inline-block;
+      margin: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: #007bff;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>优选二手车</h1>
+    <p>高性价比 • 实时库存 • 快速联系</p>
+  </header>
+
+  <section class="car-list">
+    <div class="car-card">
+      <img src="https://via.placeholder.com/300x200" alt="car image" />
+      <h3>2019 Audi RS5</h3>
+      <p>公里数：45,000 km</p>
+      <p>价格：$58,000 CAD</p>
+    </div>
+    <div class="car-card">
+      <img src="https://via.placeholder.com/300x200" alt="car image" />
+      <h3>2020 BMW X5</h3>
+      <p>公里数：38,000 km</p>
+      <p>价格：$52,500 CAD</p>
+    </div>
+  </section>
+
+  <footer>
+    <p>联系我们：</p>
+    <div class="contact-buttons">
+      <a href="tel:+1-416-888-8888">📞 电话联系</a>
+      <a href="mailto:yourshop@email.com?subject=购车咨询">📧 发送邮件</a>
+    </div>
+    <p>&copy; 2025 优选二手车</p>
+  </footer>
+</body>
+</html>
