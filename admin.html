@@ -48,7 +48,7 @@
         const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
         // Upload to backend (you'd replace this with your backend service that uses service account)
-        const response = await fetch("https://sjauto-write.onrender.com/upload", {
+        const response = await fetch("https://flameauto-write.onrender.com/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
