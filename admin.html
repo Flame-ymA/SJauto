@@ -1,123 +1,77 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Panel</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inventory Admin Panel</title>
   <style>
-    body {
-      background-color: #000;
-      color: #FFD700;
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background-color: #111;
-    }
-    th, td {
-      border: 1px solid #FFD700;
-      padding: 8px;
-      text-align: center;
-    }
-    th {
-      background-color: #222;
-    }
+    body { font-family: sans-serif; background: #f9f9f9; padding: 1rem; }
+    table { border-collapse: collapse; width: 100%; background: white; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
+    th { background: #333; color: white; }
+    tr:nth-child(even) { background: #f2f2f2; }
     button {
-      margin: 0 2px;
-      background-color: #FFD700;
+      background-color: #007bff;
+      color: white;
       border: none;
       padding: 5px 10px;
+      border-radius: 4px;
       cursor: pointer;
     }
+    button:hover { background-color: #0056b3; }
   </style>
 </head>
 <body>
-  <h1>Admin Panel</h1>
-  <input type="file" id="excelFile">
-  <button onclick="uploadExcel()">Upload Excel</button>
-  <table id="dataTable"></table>
+  <h2>🚗 SJ Auto Inventory Admin Panel</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Year</th>
+        <th>Make</th>
+        <th>Model</th>
+        <th>Mileage</th>
+        <th>Color</th>
+        <th>Price</th>
+        <th>Accident History</th>
+        <th>Upload Image</th>
+      </tr>
+    </thead>
+    <tbody id="inventory-body">
+      <!-- JavaScript will inject rows here -->
+    </tbody>
+  </table>
 
   <script>
-    const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
-    const API_KEY = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
-    const RANGE = 'Sheet1';
+    const inventoryData = [
+      { year: 2023, make: "Porsche", model: "Taycan", mileage: 16500, color: "White/Black", price: "102800", accident: "https://vhr.carfax.ca/?id=CtPlkMWlu15qTexmD5IW" },
+      { year: 2023, make: "Mercedez", model: "SL63", mileage: 1950, color: "Blue/Black", price: "173800", accident: "No" },
+      { year: 2020, make: "Mercedez", model: "C300", mileage: 48000, color: "Black/Beige", price: "30800", accident: "https://vhr.carfax.ca/?id=4vNRgjXEmhQbMQw4tiry" },
+      { year: 2025, make: "Mercedez", model: "GLA250", mileage: 5500, color: "Black/Black", price: "Wholesale Sold", accident: "No" },
+      { year: 2022, make: "MeRcedez", model: "E53", mileage: 23900, color: "Matte Gray/Black", price: "72880", accident: "No" }
+    ];
 
-    function loadSheet() {
-      fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`)
-        .then(res => res.json())
-        .then(data => {
-          const rows = data.values;
-          const headers = rows[0];
-          const table = document.getElementById("dataTable");
-          table.innerHTML = '';
+    const tbody = document.getElementById("inventory-body");
 
-          const thead = document.createElement("thead");
-          const headRow = document.createElement("tr");
-          headers.forEach(header => {
-            const th = document.createElement("th");
-            th.textContent = header;
-            headRow.appendChild(th);
-          });
-          headRow.appendChild(document.createElement("th")).textContent = "Actions";
-          thead.appendChild(headRow);
-          table.appendChild(thead);
+    inventoryData.forEach((car, index) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${car.year}</td>
+        <td>${car.make}</td>
+        <td>${car.model}</td>
+        <td>${car.mileage}</td>
+        <td>${car.color}</td>
+        <td>${car.price}</td>
+        <td>${car.accident.startsWith("http") ? `<a href="${car.accident}" target="_blank">View</a>` : car.accident}</td>
+        <td><button onclick="upload(${index})">Upload</button></td>
+      `;
+      tbody.appendChild(row);
+    });
 
-          const tbody = document.createElement("tbody");
-          rows.slice(1).forEach((row, index) => {
-            const tr = document.createElement("tr");
-            headers.forEach((_, i) => {
-              const td = document.createElement("td");
-              td.textContent = row[i] || '';
-              tr.appendChild(td);
-            });
-
-            const vin = row[headers.indexOf("VIN")];
-            const btnTd = document.createElement("td");
-
-            const uploadBtn = document.createElement("button");
-            uploadBtn.textContent = "Upload";
-            uploadBtn.onclick = () => alert("Upload for VIN " + vin);
-            btnTd.appendChild(uploadBtn);
-
-            const deleteBtn = document.createElement("button");
-            deleteBtn.textContent = "❌";
-            deleteBtn.onclick = () => alert("Delete VIN " + vin);
-            btnTd.appendChild(deleteBtn);
-
-            const holdBtn = document.createElement("button");
-            holdBtn.textContent = "✋";
-            holdBtn.onclick = () => alert("Hold VIN " + vin);
-            btnTd.appendChild(holdBtn);
-
-            tr.appendChild(btnTd);
-            tbody.appendChild(tr);
-          });
-
-          table.appendChild(tbody);
-        });
+    function upload(index) {
+      alert(`上传功能将在这里实现：车辆编号 ${index + 1}`);
     }
-
-    function uploadExcel() {
-      const fileInput = document.getElementById("excelFile");
-      const file = fileInput.files[0];
-      if (!file) return alert("Please select a file.");
-      const formData = new FormData();
-      formData.append("file", file);
-      fetch("https://flameauto-write.onrender.com/upload", {
-        method: "POST",
-        body: formData
-      })
-      .then(res => res.json())
-      .then(() => {
-        alert("Upload successful.");
-        loadSheet();
-      })
-      .catch(err => alert("Upload failed: " + err));
-    }
-
-    loadSheet();
   </script>
 </body>
 </html>
