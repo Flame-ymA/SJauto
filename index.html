@@ -3,89 +3,79 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>二手车展示页</title>
+  <title>SJ Auto Used Cars</title>
   <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f4f4f4;
-    }
-    header {
-      background-color: #333;
-      color: white;
-      text-align: center;
-      padding: 1rem 0;
-    }
-    .car-list {
+    body { font-family: sans-serif; margin: 0; background: #f5f5f5; padding: 1rem; }
+    h1 { text-align: center; color: #333; }
+    .container {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      padding: 1rem;
+      gap: 1rem;
     }
-    .car-card {
+    .card {
       background: white;
       border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-      margin: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
       padding: 1rem;
       width: 300px;
     }
-    .car-card img {
-      width: 100%;
-      border-radius: 5px;
+    .card h2 {
+      margin: 0.5rem 0;
     }
-    .car-card h3 {
-      margin: 0.5rem 0 0;
+    .card p {
+      margin: 0.3rem 0;
     }
-    .car-card p {
-      margin: 0.2rem 0;
+    .carfax {
+      margin-top: 0.5rem;
     }
-    footer {
-      text-align: center;
-      padding: 1rem;
-      background: #333;
-      color: white;
-    }
-    .contact-buttons a {
-      display: inline-block;
-      margin: 0.5rem;
-      padding: 0.5rem 1rem;
-      background: #007bff;
-      color: white;
+    .carfax a {
+      color: #007bff;
       text-decoration: none;
-      border-radius: 5px;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>优选二手车</h1>
-    <p>高性价比 • 实时库存 • 快速联系</p>
-  </header>
+  <h1>🚗 SJ Auto Inventory</h1>
+  <div class="container" id="car-list"></div>
 
-  <section class="car-list">
-    <div class="car-card">
-      <img src="https://via.placeholder.com/300x200" alt="car image" />
-      <h3>2019 Audi RS5</h3>
-      <p>公里数：45,000 km</p>
-      <p>价格：$58,000 CAD</p>
-    </div>
-    <div class="car-card">
-      <img src="https://via.placeholder.com/300x200" alt="car image" />
-      <h3>2020 BMW X5</h3>
-      <p>公里数：38,000 km</p>
-      <p>价格：$52,500 CAD</p>
-    </div>
-  </section>
+  <script>
+    async function loadSheetData() {
+      const sheetId = "1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs";
+      const sheetName = "Sheet1";
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetName}?key=AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc`;
 
-  <footer>
-    <p>联系我们：</p>
-    <div class="contact-buttons">
-      <a href="tel:+1-416-888-8888">📞 电话联系</a>
-      <a href="mailto:yourshop@email.com?subject=购车咨询">📧 发送邮件</a>
-    </div>
-    <p>&copy; 2025 优选二手车</p>
-  </footer>
+      const res = await fetch(url);
+      const data = await res.json();
+
+      const rows = data.values;
+      const headers = rows[0];
+      const cars = rows.slice(1).map(row => {
+        let obj = {};
+        headers.forEach((key, i) => obj[key] = row[i] || "");
+        return obj;
+      });
+
+      const container = document.getElementById("car-list");
+      container.innerHTML = "";
+
+      cars.forEach(car => {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+          <h2>${car["Year"]} ${car["Make"]} ${car["Model"]}</h2>
+          <p><strong>Mileage:</strong> ${car["Mileage"]} km</p>
+          <p><strong>Color:</strong> ${car["Color"]}</p>
+          <p><strong>Price:</strong> $${car["Price"]}</p>
+          <div class="carfax">
+            ${car["Accident History"].startsWith("http") ? `<a href="${car["Accident History"]}" target="_blank">View Carfax Report</a>` : ""}
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    loadSheetData();
+  </script>
 </body>
 </html>
