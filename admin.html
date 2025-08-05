@@ -1,1 +1,99 @@
-<!-- admin.html (后台管理页面) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Panel</title>
+  <style>
+    body { font-family: sans-serif; background: #f5f5f5; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    button { margin: 2px; }
+  </style>
+</head>
+<body>
+  <h2>Upload Inventory Excel</h2>
+  <input type="file" id="excelFile">
+  <button onclick="uploadExcel()">Upload Excel</button>
+
+  <h2>Inventory List</h2>
+  <table id="inventoryTable"></table>
+
+  <script>
+    const sheetId = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
+    const sheetName = 'Inventory';
+    const apiKey = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
+    const cloudName = 'duwckagtg';
+    const uploadPreset = 'car upload';
+
+    function uploadExcel() {
+      const file = document.getElementById('excelFile').files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+      fetch('https://flameauto-write.onrender.com/upload', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(() => loadSheet());
+    }
+
+    async function loadSheet() {
+      const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetName}?key=${apiKey}`);
+      const data = await res.json();
+      const headers = data.values[0];
+      const rows = data.values.slice(1);
+      const table = document.getElementById('inventoryTable');
+      table.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}<th>Actions</th></tr>`;
+
+      rows.forEach((row, rowIndex) => {
+        const vin = row[headers.indexOf('VIN')] || '';
+        const tr = document.createElement('tr');
+        row.forEach(cell => {
+          const td = document.createElement('td');
+          td.textContent = cell;
+          tr.appendChild(td);
+        });
+        const td = document.createElement('td');
+        td.innerHTML = `
+          <button onclick="uploadPhoto('${vin}')">Upload</button>
+          <button onclick="deleteRow(${rowIndex + 1})">❌</button>
+          <button onclick="holdRow('${vin}')">✋</button>`;
+        tr.appendChild(td);
+        table.appendChild(tr);
+      });
+    }
+
+    function uploadPhoto(vin) {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = () => {
+        const file = input.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', uploadPreset);
+        formData.append('public_id', vin);
+        fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: 'POST', body: formData
+        }).then(res => res.json()).then(() => alert('Photo uploaded'));
+      };
+      input.click();
+    }
+
+    function deleteRow(index) {
+      fetch('https://flameauto-write.onrender.com/delete', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ rowIndex: index })
+      }).then(() => loadSheet());
+    }
+
+    function holdRow(vin) {
+      fetch('https://flameauto-write.onrender.com/hold', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ vin })
+      }).then(() => loadSheet());
+    }
+
+    loadSheet();
+  </script>
+</body>
+</html>

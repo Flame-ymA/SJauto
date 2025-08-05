@@ -1,1 +1,68 @@
-<!-- index.html (前端展示页面) --> ...
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SJ Auto Inventory</title>
+  <style>
+    body { background-color: #000; color: #FFD700; font-family: Arial, sans-serif; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #FFD700; padding: 10px; text-align: center; }
+    th { background-color: #222; }
+    .car-card { background: #111; border: 1px solid #FFD700; border-radius: 10px; margin: 20px 0; padding: 10px; }
+    .car-card img { max-width: 100%; height: auto; border-radius: 8px; }
+    .hold { opacity: 0.4; }
+  </style>
+</head>
+<body>
+  <h1>SJ Auto Inventory</h1>
+  <div id="inventory"></div>
+  <script>
+    const sheetId = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
+    const sheetName = 'Inventory';
+    const statusSheet = 'Status';
+    const apiKey = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
+
+    async function fetchData() {
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${sheetName}?key=${apiKey}`;
+      const statusUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${statusSheet}?key=${apiKey}`;
+
+      const [res, statusRes] = await Promise.all([fetch(url), fetch(statusUrl)]);
+      const data = await res.json();
+      const statusData = await statusRes.json();
+
+      const headers = data.values[0];
+      const cars = data.values.slice(1);
+      const statusMap = Object.fromEntries(statusData.values?.slice(1)?.map(row => [row[0], row[1]]) || []);
+
+      const container = document.getElementById('inventory');
+      container.innerHTML = '';
+
+      cars.forEach(car => {
+        const carObj = Object.fromEntries(headers.map((h, i) => [h, car[i]]));
+        const status = statusMap[carObj.VIN] || '';
+
+        if (status.toLowerCase() === 'sold' || status.toLowerCase() === 'deleted') return;
+
+        const card = document.createElement('div');
+        card.className = 'car-card';
+        if (status.toLowerCase() === 'hold') card.classList.add('hold');
+
+        card.innerHTML = `
+          <h2>${carObj.Year} ${carObj.Make} ${carObj.Model}</h2>
+          <p><strong>Mileage:</strong> ${carObj.Mileage}</p>
+          <p><strong>Color:</strong> ${carObj.Color}</p>
+          <p><strong>Price:</strong> ${carObj.Price}</p>
+          <p><strong>Accident:</strong> ${carObj['Accident History']}</p>
+          <p><a href="https://www.carfax.ca/${carObj.VIN}" target="_blank">View CARFAX</a></p>
+          <img src="https://res.cloudinary.com/duwckagtg/image/upload/v1690000000/${carObj.VIN}.jpg" onerror="this.style.display='none'">
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    fetchData();
+  </script>
+</body>
+</html>
