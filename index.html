@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,18 +18,39 @@
       padding: 15px;
       margin: 15px 0;
       background-color: #111;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
     }
     .car-card.hold {
       opacity: 0.5;
     }
+    .image-carousel {
+      max-width: 50%;
+      position: relative;
+    }
     .car-image {
-      max-width: 100%;
-      height: auto;
+      width: 100%;
       border-radius: 8px;
-      margin-bottom: 10px;
+      display: block;
+    }
+    .carousel-controls {
+      text-align: center;
+      margin-top: 5px;
+    }
+    .carousel-btn {
+      background-color: #FFD700;
+      color: #000;
+      border: none;
+      padding: 5px 10px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 0 5px;
     }
     .car-info {
       font-size: 16px;
+      flex: 1;
     }
     .car-info strong {
       color: #FFD700;
@@ -48,6 +68,52 @@
     const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
     const API_KEY = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
     const RANGE = 'Sheet1';
+    const CLOUD_NAME = 'duwckagtg';
+
+    function getImageUrls(vin, max = 5) {
+      const urls = [];
+      for (let i = 1; i <= max; i++) {
+        urls.push(`https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${vin}${i}.jpg`);
+      }
+      return urls;
+    }
+
+    function createCarousel(imageUrls) {
+      const container = document.createElement("div");
+      container.className = "image-carousel";
+
+      const img = document.createElement("img");
+      img.src = imageUrls[0];
+      img.className = "car-image";
+      container.appendChild(img);
+
+      let currentIndex = 0;
+
+      const controls = document.createElement("div");
+      controls.className = "carousel-controls";
+
+      const prevBtn = document.createElement("button");
+      prevBtn.textContent = "←";
+      prevBtn.className = "carousel-btn";
+      prevBtn.onclick = () => {
+        currentIndex = (currentIndex - 1 + imageUrls.length) % imageUrls.length;
+        img.src = imageUrls[currentIndex];
+      };
+
+      const nextBtn = document.createElement("button");
+      nextBtn.textContent = "→";
+      nextBtn.className = "carousel-btn";
+      nextBtn.onclick = () => {
+        currentIndex = (currentIndex + 1) % imageUrls.length;
+        img.src = imageUrls[currentIndex];
+      };
+
+      controls.appendChild(prevBtn);
+      controls.appendChild(nextBtn);
+      container.appendChild(controls);
+
+      return container;
+    }
 
     fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`)
       .then(res => res.json())
@@ -66,15 +132,12 @@
           card.className = "car-card" + (status === 'hold' ? " hold" : "");
 
           const vin = row[vinIndex];
-          const image = document.createElement("img");
-          image.src = `https://res.cloudinary.com/duwckagtg/image/upload/vin_${vin}.jpg`;
-          image.alt = "Car Image";
-          image.className = "car-image";
-
-          card.appendChild(image);
+          const imageUrls = getImageUrls(vin);
+          const carousel = createCarousel(imageUrls);
 
           const info = document.createElement("div");
           info.className = "car-info";
+
           headers.forEach((header, i) => {
             if (header !== "VIN" && header !== "Status") {
               const p = document.createElement("p");
@@ -90,6 +153,7 @@
           info.appendChild(report);
 
           card.appendChild(info);
+          card.appendChild(carousel);
           container.appendChild(card);
         });
       });
