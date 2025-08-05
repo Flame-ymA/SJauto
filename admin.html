@@ -123,38 +123,37 @@
     }
 
     // ===== 以下为新增功能：上传图片到 Cloudinary =====
-    function uploadImageForVIN(vin) {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.onchange = async () => {
-        const file = input.files[0];
-        if (!file) return;
+function uploadImageForVIN(vin) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', 'your_upload_preset'); // 替换为你 Cloudinary 设置的 preset
-        formData.append('public_id', vin); // 图片以 VIN 命名
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'car_inventory'); // ✅ 你的 Cloudinary preset
+    formData.append('public_id', vin); // ✅ 用 VIN 命名
 
-        try {
-          const res = await fetch('https://api.cloudinary.com/v1_1/your_cloud_name/image/upload', {
-            method: 'POST',
-            body: formData
-          });
-          const data = await res.json();
-          if (data.secure_url) {
-            alert('上传成功: ' + data.original_filename);
-          } else {
-            alert('上传失败');
-          }
-        } catch (err) {
-          alert('上传异常');
-          console.error(err);
-        }
-      };
-      input.click();
+    try {
+      const res = await fetch('https://api.cloudinary.com/v1_1/daz8hmu8w/image/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.secure_url) {
+        alert('上传成功: ' + data.original_filename);
+      } else {
+        alert('上传失败');
+      }
+    } catch (err) {
+      alert('上传异常');
+      console.error(err);
     }
-
+  };
+  input.click();
+}
     loadSheet();
   </script>
 </body>
