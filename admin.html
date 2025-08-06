@@ -156,6 +156,13 @@
               method: 'POST',
               body: formData
             });
+            console.log('上传参数：', {
+              apiKey,
+              timestamp,
+              signature,
+              public_id: `${vin}/${filename}`,
+              cloudName: CLOUDINARY_CLOUD_NAME
+            });
 
             const data = await res.json();
             if (data.secure_url) {
