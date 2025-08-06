@@ -150,9 +150,9 @@
             formData.append('timestamp', timestamp);
             formData.append('signature', signature);
             formData.append('public_id', `${vin}/${filename}`);
-            formData.append('folder', vin);
+          
 
-            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+            const res = await fetch(`https://api.cloudinary.com/v1_1/duwckagtg/image/upload`, {
               method: 'POST',
               body: formData
             });
