@@ -2,120 +2,73 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Buy Used Cars - SJ Auto</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SJ Auto Inventory</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background-color: #000;
       color: #FFD700;
       margin: 0;
-      padding: 20px;
+      padding: 0;
     }
-    h1 {
+    nav {
+      background-color: #111;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-bottom: 2px solid #FFD700;
+    }
+    nav a {
+      color: #FFD700;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 16px;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .banner {
+      width: 100%;
+      max-height: 400px;
+      object-fit: cover;
+    }
+    .content {
+      padding: 30px 20px;
       text-align: center;
     }
-    .car-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
+    .slogan {
+      font-size: 22px;
+      margin-bottom: 20px;
     }
-    .car-card {
-      border: 2px solid #FFD700;
-      border-radius: 10px;
-      padding: 10px;
-      background-color: #111;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      position: relative;
-    }
-    .car-card.hold {
-      opacity: 0.5;
-    }
-    .car-image {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-      border-radius: 8px;
-    }
-    .car-info {
-      margin-top: 10px;
-    }
-    .car-info p {
-      margin: 5px 0;
-    }
-    .details-btn {
-      position: absolute;
-      bottom: 10px;
-      right: 10px;
-      background-color: #FFD700;
-      color: black;
-      border: none;
-      padding: 5px 10px;
-      cursor: pointer;
-      font-weight: bold;
-      border-radius: 5px;
-    }
-    .details-btn:hover {
-      background-color: #e6c200;
+    .contact {
+      font-size: 16px;
+      margin-top: 40px;
+      border-top: 1px solid #FFD700;
+      padding-top: 20px;
     }
   </style>
 </head>
 <body>
-  <h1>Available Cars</h1>
-  <div class="car-grid" id="car-list"></div>
+  <nav>
+    <a href="buy.html">买车</a>
+    <a href="#">卖车</a>
+    <a href="#">租车</a>
+  </nav>
 
-  <script>
-    const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
-    const API_KEY = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
-    const RANGE = 'Sheet1';
+  <!-- 海报图（可更换为后台上传） -->
+  <img src="https://images.unsplash.com/photo-1549924231-f129b911e442?auto=format&fit=crop&w=1350&q=80" alt="SJ Auto Banner" class="banner" />
 
-    fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`)
-      .then(res => res.json())
-      .then(data => {
-        const rows = data.values;
-        const headers = rows[0];
-        const vinIndex = headers.indexOf("VIN");
-        const statusIndex = headers.indexOf("Status");
-        const container = document.getElementById("car-list");
+  <div class="content">
+    <div class="slogan">
+      我们服务至上，为您挑选心仪爱车，<br>并提供最适合您的经济方案，让购车轻松无忧！
+    </div>
 
-        rows.slice(1).forEach(row => {
-          const status = row[statusIndex]?.toLowerCase();
-          if (status === 'sold' || status === 'deleted') return;
-
-          const card = document.createElement("div");
-          card.className = "car-card" + (status === 'hold' ? " hold" : "");
-
-          const vin = row[vinIndex];
-          const image = document.createElement("img");
-          image.src = `https://res.cloudinary.com/duwckagtg/image/upload/${vin}1.jpg`;
-          image.alt = "Car Image";
-          image.className = "car-image";
-          card.appendChild(image);
-
-          const info = document.createElement("div");
-          info.className = "car-info";
-          headers.forEach((header, i) => {
-            if (header !== "VIN" && header !== "Status") {
-              const p = document.createElement("p");
-              p.innerHTML = `<strong>${header}:</strong> ${row[i] || ''}`;
-              info.appendChild(p);
-            }
-          });
-          card.appendChild(info);
-
-          const detailsBtn = document.createElement("button");
-          detailsBtn.className = "details-btn";
-          detailsBtn.textContent = "查看详细";
-          detailsBtn.onclick = () => {
-            window.location.href = `details.html?vin=${vin}`;
-          };
-          card.appendChild(detailsBtn);
-
-          container.appendChild(card);
-        });
-      });
-  </script>
+    <div class="contact">
+      <p>销售电话：416-888-8888</p>
+      <p>邮箱：info@sjauto.ca</p>
+    </div>
+  </div>
 </body>
 </html>
