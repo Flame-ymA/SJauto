@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SJ Auto Inventory</title>
   <style>
     body {
@@ -10,71 +10,91 @@
       background-color: #000;
       color: #FFD700;
       margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #111;
       padding: 20px;
-    }
-    h1 {
       text-align: center;
-      margin-bottom: 30px;
     }
-    .grid-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
+    nav {
+      display: flex;
+      justify-content: center;
+      background-color: #222;
+      padding: 10px;
+    }
+    nav a {
+      color: #FFD700;
+      text-decoration: none;
+      margin: 0 20px;
+      font-weight: bold;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .slogan {
+      background-color: #111;
+      text-align: center;
+      padding: 20px;
+      font-size: 18px;
+      border-top: 1px solid #FFD700;
+      border-bottom: 1px solid #FFD700;
     }
     .car-card {
-      background-color: #111;
       border: 2px solid #FFD700;
-      border-radius: 12px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      height: 100%;
-    }
-    .car-image {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-    }
-    .car-info {
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      flex-grow: 1;
-    }
-    .car-details {
-      font-size: 14px;
-      margin-bottom: 10px;
-    }
-    .car-details p {
-      margin: 2px 0;
-    }
-    .car-details strong {
-      color: #FFD700;
-    }
-    .btn-detail {
-      align-self: flex-end;
-      background-color: #FFD700;
-      color: #000;
-      border: none;
-      padding: 5px 10px;
-      font-weight: bold;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    .btn-detail:hover {
-      background-color: #e6c200;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 15px;
+      background-color: #111;
+      width: calc(25% - 40px);
+      box-sizing: border-box;
+      float: left;
     }
     .car-card.hold {
       opacity: 0.5;
     }
+    .car-image {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .car-info {
+      font-size: 16px;
+    }
+    .car-info strong {
+      color: #FFD700;
+    }
+    a {
+      color: #FFD700;
+    }
+    .footer {
+      clear: both;
+      padding: 30px;
+      background-color: #111;
+      text-align: center;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
-  <h1>SJ Auto Inventory</h1>
-  <div class="grid-container" id="car-list"></div>
-
+  <header>
+    <h1>SJ Auto Inventory</h1>
+  </header>
+  <nav>
+    <a href="#">二手车买车</a>
+    <a href="#">二手车卖车</a>
+    <a href="#">租车服务</a>
+  </nav>
+  <div class="slogan">
+    我们以服务为本，致力于为您挑选心仪座驾，提供最合适的经济方案，让您轻松购车无忧。
+  </div>
+  <div id="car-list"></div>
+  <div class="footer">
+    联系销售人员：<br />
+    电话：123-456-7890<br />
+    邮箱：sales@sjautoinventory.com
+  </div>
   <script>
     const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
     const API_KEY = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
@@ -98,30 +118,27 @@
 
           const vin = row[vinIndex];
           const image = document.createElement("img");
-          image.src = `https://res.cloudinary.com/duwckagtg/image/upload/${vin}1.jpg`;
+          image.src = `https://res.cloudinary.com/duwckagtg/image/upload/vin_${vin}.jpg`;
           image.alt = "Car Image";
           image.className = "car-image";
+
           card.appendChild(image);
 
           const info = document.createElement("div");
           info.className = "car-info";
-
-          const detail = document.createElement("div");
-          detail.className = "car-details";
           headers.forEach((header, i) => {
             if (header !== "VIN" && header !== "Status") {
               const p = document.createElement("p");
               p.innerHTML = `<strong>${header}:</strong> ${row[i] || ''}`;
-              detail.appendChild(p);
+              info.appendChild(p);
             }
           });
-          info.appendChild(detail);
 
-          const btn = document.createElement("button");
-          btn.className = "btn-detail";
-          btn.textContent = "查看详细";
-          btn.onclick = () => alert(`点击查看 VIN: ${vin} 的更多信息`);
-          info.appendChild(btn);
+          const report = document.createElement("a");
+          report.href = `https://www.carfax.com/vehicle/${vin}`;
+          report.textContent = "查看详细";
+          report.target = "_blank";
+          info.appendChild(report);
 
           card.appendChild(info);
           container.appendChild(card);
