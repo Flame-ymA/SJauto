@@ -60,10 +60,8 @@
     const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
     const SHEET_NAME = 'Sheet1';
     const API_KEY = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
-    // ===== Cloudinary 配置（请放在 script 顶部）=====
-    const cloud_name = "duwckagtg";
-    const upload_preset = "car_inventory";
-  
+    const CLOUDINARY_CLOUD_NAME = 'duwckagtg';
+
     function loadSheet() {
       fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`)
         .then(res => res.json())
@@ -87,7 +85,7 @@
             const uploadBtn = document.createElement('button');
             uploadBtn.className = 'btn';
             uploadBtn.textContent = 'Upload';
-            uploadBtn.onclick = () => uploadImageForVIN(vin);
+            uploadBtn.onclick = () => uploadImageSigned(vin);
             const tdUpload = document.createElement('td');
             tdUpload.appendChild(uploadBtn);
             tr.appendChild(tdUpload);
@@ -124,43 +122,56 @@
         alert('上传失败');
       });
     }
-//上传图片
-function uploadImageForVIN(vin) {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.multiple = true; // 支持多选
-  input.onchange = async () => {
-    const files = input.files;
-    if (!files || files.length === 0) return;
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', 'car_inventory');
-      formData.append('public_id', `${vin}/${file.name}`); // 按 VIN 文件夹分类，保持原文件名
+    // 使用 signed upload 上传图片
+    async function uploadImageSigned(vin) {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.multiple = true;
+      input.onchange = async () => {
+        const files = input.files;
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const filename = `${vin}${i + 1}`;
 
-      try {
-        const res = await fetch('https://api.cloudinary.com/v1_1/你的cloud_name/image/upload', {
-          method: 'POST',
-          body: formData
-        });
-        const data = await res.json();
-        if (data.secure_url) {
-          console.log('上传成功:', data.secure_url);
-        } else {
-          console.error('上传失败:', data);
+          try {
+            // 获取签名
+            const signRes = await fetch('https://flameauto-write.onrender.com/get-signature', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ public_id: `${vin}/${filename}` })
+            });
+            const { signature, timestamp, apiKey } = await signRes.json();
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('api_key', apiKey);
+            formData.append('timestamp', timestamp);
+            formData.append('signature', signature);
+            formData.append('public_id', `${vin}/${filename}`);
+            formData.append('folder', vin);
+
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+              method: 'POST',
+              body: formData
+            });
+
+            const data = await res.json();
+            if (data.secure_url) {
+              console.log('✅ 上传成功:', data.secure_url);
+            } else {
+              console.error('❌ 上传失败:', data);
+            }
+          } catch (err) {
+            console.error('❌ 上传异常:', err);
+          }
         }
-      } catch (err) {
-        console.error('上传异常:', err);
-      }
+        alert(`✅ 上传完成，共上传 ${files.length} 张图`);
+      };
+      input.click();
     }
 
-    alert(`✅ 上传完成，共上传 ${files.length} 张图`);
-  };
-  input.click();
-}
     loadSheet();
   </script>
 </body>
