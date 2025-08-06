@@ -3,98 +3,69 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SJ Auto Inventory</title>
+  <title>Buy Used Cars - SJ Auto</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background-color: #000;
       color: #FFD700;
       margin: 0;
-      padding: 0;
-    }
-    header {
-      background-color: #111;
       padding: 20px;
+    }
+    h1 {
       text-align: center;
     }
-    nav {
-      display: flex;
-      justify-content: center;
-      background-color: #222;
-      padding: 10px;
-    }
-    nav a {
-      color: #FFD700;
-      text-decoration: none;
-      margin: 0 20px;
-      font-weight: bold;
-    }
-    nav a:hover {
-      text-decoration: underline;
-    }
-    .slogan {
-      background-color: #111;
-      text-align: center;
-      padding: 20px;
-      font-size: 18px;
-      border-top: 1px solid #FFD700;
-      border-bottom: 1px solid #FFD700;
+    .car-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
     }
     .car-card {
       border: 2px solid #FFD700;
       border-radius: 10px;
-      padding: 15px;
-      margin: 15px;
+      padding: 10px;
       background-color: #111;
-      width: calc(25% - 40px);
-      box-sizing: border-box;
-      float: left;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
     }
     .car-card.hold {
       opacity: 0.5;
     }
     .car-image {
-      max-width: 100%;
-      height: auto;
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
       border-radius: 8px;
-      margin-bottom: 10px;
     }
     .car-info {
-      font-size: 16px;
+      margin-top: 10px;
     }
-    .car-info strong {
-      color: #FFD700;
+    .car-info p {
+      margin: 5px 0;
     }
-    a {
-      color: #FFD700;
+    .details-btn {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background-color: #FFD700;
+      color: black;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 5px;
     }
-    .footer {
-      clear: both;
-      padding: 30px;
-      background-color: #111;
-      text-align: center;
-      font-size: 16px;
+    .details-btn:hover {
+      background-color: #e6c200;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>SJ Auto Inventory</h1>
-  </header>
-  <nav>
-    <a href="#">二手车买车</a>
-    <a href="#">二手车卖车</a>
-    <a href="#">租车服务</a>
-  </nav>
-  <div class="slogan">
-    我们以服务为本，致力于为您挑选心仪座驾，提供最合适的经济方案，让您轻松购车无忧。
-  </div>
-  <div id="car-list"></div>
-  <div class="footer">
-    联系销售人员：<br />
-    电话：123-456-7890<br />
-    邮箱：sales@sjautoinventory.com
-  </div>
+  <h1>Available Cars</h1>
+  <div class="car-grid" id="car-list"></div>
+
   <script>
     const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
     const API_KEY = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
@@ -118,10 +89,9 @@
 
           const vin = row[vinIndex];
           const image = document.createElement("img");
-          image.src = `https://res.cloudinary.com/duwckagtg/image/upload/vin_${vin}.jpg`;
+          image.src = `https://res.cloudinary.com/duwckagtg/image/upload/${vin}1.jpg`;
           image.alt = "Car Image";
           image.className = "car-image";
-
           card.appendChild(image);
 
           const info = document.createElement("div");
@@ -133,14 +103,16 @@
               info.appendChild(p);
             }
           });
-
-          const report = document.createElement("a");
-          report.href = `https://www.carfax.com/vehicle/${vin}`;
-          report.textContent = "查看详细";
-          report.target = "_blank";
-          info.appendChild(report);
-
           card.appendChild(info);
+
+          const detailsBtn = document.createElement("button");
+          detailsBtn.className = "details-btn";
+          detailsBtn.textContent = "查看详细";
+          detailsBtn.onclick = () => {
+            window.location.href = `details.html?vin=${vin}`;
+          };
+          card.appendChild(detailsBtn);
+
           container.appendChild(card);
         });
       });
