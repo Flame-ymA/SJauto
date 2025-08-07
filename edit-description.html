@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>编辑车辆描述</title>
   <style>
     body {
@@ -41,57 +40,54 @@
 </head>
 <body>
   <h1>编辑车辆描述</h1>
-  <textarea id="description" placeholder="正在加载描述..."></textarea>
+  <textarea id="description" placeholder="输入车辆描述..."></textarea>
   <br>
   <button onclick="saveDescription()">保存描述</button>
 
   <script>
     const vin = new URLSearchParams(window.location.search).get('vin');
     const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
-    const SHEET_NAME = 'Sheet1';
     const API_KEY = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
 
-    // 1. 加载原始描述
-    async function loadDescription() {
-      const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`);
-      const data = await res.json();
-      const rows = data.values;
-      const headers = rows[0];
-      const vinIndex = headers.indexOf('VIN');
-      const detailIndex = headers.indexOf('Detail');
+    // 加载已有描述
+    fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1?key=${API_KEY}`)
+      .then(res => res.json())
+      .then(data => {
+        const headers = data.values[0];
+        const rows = data.values.slice(1);
+        const vinIndex = headers.indexOf("VIN");
+        const detailIndex = headers.indexOf("Detail");
 
-      for (let i = 1; i < rows.length; i++) {
-        if (rows[i][vinIndex] === vin) {
-          document.getElementById('description').value = rows[i][detailIndex] || '';
-          return;
+        const match = rows.find(row => row[vinIndex] === vin);
+        if (match && match[detailIndex]) {
+          document.getElementById('description').value = match[detailIndex];
         }
-      }
-      document.getElementById('description').value = '';
-    }
+      });
 
-    // 2. 保存描述到后端（使用你后端 API 更新 Google Sheet）
-    async function saveDescription() {
-      const text = document.getElementById('description').value.trim();
-      if (!text) {
+    function saveDescription() {
+      const desc = document.getElementById('description').value.trim();
+      if (!desc) {
         alert('描述不能为空');
         return;
       }
 
-      const response = await fetch('https://flameauto-write.onrender.com/update-detail', {
+      fetch('https://flameauto-write.onrender.com/update-detail', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vin, detail: text })
+        body: JSON.stringify({ vin, detail: desc })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('✅ 描述已保存');
+        } else {
+          alert('❌ 保存失败，请稍后重试');
+        }
+      })
+      .catch(err => {
+        alert('❌ 网络错误：' + err.message);
       });
-
-      if (response.ok) {
-        alert('✅ 描述已成功保存');
-        // 不跳转
-      } else {
-        alert('❌ 保存失败，请稍后再试');
-      }
     }
-
-    loadDescription();
   </script>
 </body>
 </html>
