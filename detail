@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>车辆详情页</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #FFD700;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+      padding: 20px;
+    }
+    .image-viewer {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .image-viewer img {
+      max-width: 100%;
+      height: auto;
+      border: 2px solid #FFD700;
+      border-radius: 8px;
+    }
+    .nav-buttons {
+      margin-top: 10px;
+    }
+    .nav-buttons button {
+      background-color: #FFD700;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      padding: 8px 16px;
+      margin: 0 10px;
+      cursor: pointer;
+    }
+    .info-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .description {
+      background-color: #111;
+      padding: 15px;
+      border-radius: 8px;
+      min-height: 200px;
+      margin-bottom: 20px;
+    }
+    .report-link {
+      margin-top: auto;
+      font-size: 16px;
+    }
+    .report-link a {
+      color: #FFD700;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="image-viewer">
+    <img id="carImage" src="" alt="车辆照片" />
+    <div class="nav-buttons">
+      <button onclick="prevImage()">←</button>
+      <button onclick="nextImage()">→</button>
+    </div>
+  </div>
+
+  <div class="info-section">
+    <div class="description" id="descriptionText">
+      加载中...
+    </div>
+    <div class="report-link" id="reportLink">
+      <!-- 这里会填入报告或联系方式 -->
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const vin = urlParams.get('vin');
+    const CLOUDINARY_NAME = 'duwckagtg';
+    let currentIndex = 0;
+    let imageList = [];
+
+    async function fetchImages() {
+      // 最多加载10张
+      for (let i = 0; i < 10; i++) {
+        const suffix = i === 0 ? 'main' : i;
+        const imgUrl = `https://res.cloudinary.com/${CLOUDINARY_NAME}/image/upload/${vin}/${vin}${suffix}.jpg`;
+        try {
+          const res = await fetch(imgUrl, { method: 'HEAD' });
+          if (res.ok) imageList.push(imgUrl);
+        } catch (e) { break; }
+      }
+      updateImage();
+    }
+
+    function updateImage() {
+      if (imageList.length > 0) {
+        document.getElementById('carImage').src = imageList[currentIndex];
+      }
+    }
+
+    function prevImage() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        updateImage();
+      }
+    }
+
+    function nextImage() {
+      if (currentIndex < imageList.length - 1) {
+        currentIndex++;
+        updateImage();
+      }
+    }
+
+    function loadDescription() {
+      const desc = localStorage.getItem(`desc_${vin}`) || '暂无描述信息';
+      document.getElementById('descriptionText').textContent = desc;
+    }
+
+    async function loadReportLink() {
+      const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
+      const API_KEY = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
+      const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1?key=${API_KEY}`);
+      const data = await res.json();
+      const headers = data.values[0];
+      const vinIndex = headers.indexOf("VIN");
+      const accidentIndex = headers.indexOf("Accident");
+      const row = data.values.find(r => r[vinIndex] === vin);
+
+      if (row) {
+        const accidentLink = row[accidentIndex];
+        const linkContainer = document.getElementById("reportLink");
+        if (accidentLink.startsWith("http")) {
+          linkContainer.innerHTML = `<a href="${accidentLink}" target="_blank">查看车辆详细报告</a>`;
+        } else {
+          linkContainer.innerHTML = `请联系销售：416-888-8888 或 info@sjauto.ca`;
+        }
+      }
+    }
+
+    fetchImages();
+    loadDescription();
+    loadReportLink();
+  </script>
+</body>
+</html>
