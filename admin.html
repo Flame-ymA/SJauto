@@ -141,7 +141,11 @@
         const signRes = await fetch('https://flameauto-write.onrender.com/get-signature', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ public_id: `${vin}/${filename}` })  // 注意路径带文件夹名
+         body: JSON.stringify({ 
+  public_id: `${vin}/${filename}`,
+  folder: vin  // ✅ 多传一个 folder
+})
+          // 注意路径带文件夹名
         });
         const { signature, timestamp, apiKey } = await signRes.json();
 
