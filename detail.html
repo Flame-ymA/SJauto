@@ -79,12 +79,14 @@
     let currentIndex = 0;
     let imageUrls = [];
 
-   // ✅ 加载 Cloudinary 图片
+  // ✅ 加载 Cloudinary 图片（从后端 search 接口获取）
 async function loadImages() {
   try {
     const response = await fetch(`https://flameauto-write.onrender.com/cloudinary-search?vin=${vin}`);
     const data = await response.json();
-    imageUrls = data.urls || [];
+
+    const resources = data.resources || [];
+    imageUrls = resources.map((img) => img.secure_url);  // 从每个资源提取出图片 URL
 
     if (imageUrls.length === 0) {
       document.getElementById('carImage').src = 'https://placehold.co/600x400?text=No+Image';
