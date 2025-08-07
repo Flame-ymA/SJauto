@@ -79,23 +79,23 @@
     let currentIndex = 0;
     let imageUrls = [];
 
-    // ✅ 加载 Cloudinary 图片
-    async function loadImages() {
-      try {
-        const response = await fetch(`https://flameauto-write.onrender.com/cloudinary-search?vin=${vin}`);
-        const data = await response.json();
-        imageUrls = data.urls || [];
+   // ✅ 加载 Cloudinary 图片
+async function loadImages() {
+  try {
+    const response = await fetch(`https://flameauto-write.onrender.com/cloudinary-search?vin=${vin}`);
+    const data = await response.json();
+    imageUrls = data.urls || [];
 
-        if (imageUrls.length === 0) {
-          document.getElementById('carImage').src = 'https://via.placeholder.com/600x400?text=No+Image';
-        } else {
-          document.getElementById('carImage').src = imageUrls[0];
-        }
-      } catch (error) {
-        console.error('加载图片失败', error);
-        document.getElementById('carImage').src = 'https://via.placeholder.com/600x400?text=Error';
-      }
+    if (imageUrls.length === 0) {
+      document.getElementById('carImage').src = 'https://placehold.co/600x400?text=No+Image';
+    } else {
+      document.getElementById('carImage').src = imageUrls[0];
     }
+  } catch (error) {
+    console.error('加载图片失败', error);
+    document.getElementById('carImage').src = 'https://placehold.co/600x400?text=Error';
+  }
+}
 
     // ✅ 加载描述文字
     async function loadDescription() {
