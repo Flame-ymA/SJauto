@@ -17,7 +17,6 @@
     }
     .gallery {
       flex: 1;
-      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -80,39 +79,66 @@
     let currentIndex = 0;
     let imageUrls = [];
 
+    // ✅ 加载 Cloudinary 图片
     async function loadImages() {
       try {
-        const response = await fetch(`https://flameauto-write.onrender.com/cloudinary-search?vin=${vin}`);
+        const response = await fetch(`https://flameauto-write.onrender.com/get-vin-images?vin=${vin}`);
         const data = await response.json();
+        imageUrls = data.urls || [];
 
-        if (!data.resources || data.resources.length === 0) {
+        if (imageUrls.length === 0) {
           document.getElementById('carImage').src = 'https://via.placeholder.com/600x400?text=No+Image';
-          return;
+        } else {
+          document.getElementById('carImage').src = imageUrls[0];
         }
-
-        // 排序按 public_id 排序（如 main、1、2...）
-        imageUrls = data.resources
-          .map(img => img.secure_url)
-          .sort((a, b) => a.localeCompare(b));
-
-        document.getElementById('carImage').src = imageUrls[0];
       } catch (error) {
         console.error('加载图片失败', error);
         document.getElementById('carImage').src = 'https://via.placeholder.com/600x400?text=Error';
       }
     }
 
+    // ✅ 加载描述文字
+    async function loadDescription() {
+      const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
+      const API_KEY = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
+      try {
+        const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1?key=${API_KEY}`);
+        const data = await res.json();
+        const headers = data.values[0];
+        const vinIndex = headers.indexOf("VIN");
+        const detailIndex = headers.indexOf("Detail");
+
+        if (vinIndex === -1 || detailIndex === -1) {
+          document.getElementById('descText').textContent = '未找到描述字段';
+          return;
+        }
+
+        const row = data.values.find(row => row[vinIndex] === vin);
+        if (row) {
+          document.getElementById('descText').textContent = row[detailIndex] || '暂无描述';
+        } else {
+          document.getElementById('descText').textContent = '未找到该车辆';
+        }
+      } catch (err) {
+        console.error('加载描述失败:', err);
+        document.getElementById('descText').textContent = '描述加载失败';
+      }
+    }
+
     function nextImage() {
+      if (!imageUrls.length) return;
       currentIndex = (currentIndex + 1) % imageUrls.length;
       document.getElementById('carImage').src = imageUrls[currentIndex];
     }
 
     function prevImage() {
+      if (!imageUrls.length) return;
       currentIndex = (currentIndex - 1 + imageUrls.length) % imageUrls.length;
       document.getElementById('carImage').src = imageUrls[currentIndex];
     }
 
     loadImages();
+    loadDescription();
   </script>
 </body>
 </html>
