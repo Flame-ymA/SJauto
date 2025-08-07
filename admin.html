@@ -123,61 +123,65 @@
       });
     }
 
-    async function uploadImageSigned(vin) {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.multiple = true;
+async function uploadImageSigned(vin) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.multiple = true;
 
-      input.onchange = async () => {
-        const files = input.files;
+  input.onchange = async () => {
+    const files = input.files;
 
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          const timestampSuffix = Date.now();
-          const filename = `${vin}${i + 1}_${timestampSuffix}`;
-          const publicId = `${vin}/${filename}`;
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const timestampSuffix = Date.now();
+      const filename = `${vin}${i + 1}_${timestampSuffix}`;
+      const publicId = `${vin}/${filename}`;
 
-          try {
-            const signRes = await fetch('https://flameauto-write.onrender.com/get-signature', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ public_id: publicId })
-            });
+      try {
+        const signRes = await fetch('https://flameauto-write.onrender.com/get-signature', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ public_id: publicId })
+        });
 
-            const { signature, timestamp, apiKey } = await signRes.json();
-
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('api_key', apiKey);
-            formData.append('timestamp', timestamp);
-            formData.append('signature', signature);
-            formData.append('public_id', publicId);
-
-            const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-              method: 'POST',
-              body: formData
-            });
-
-            const result = await uploadRes.json();
-            if (result.secure_url) {
-              console.log('✅ 上传成功:', result.secure_url);
-            } else {
-              console.error('❌ 上传失败:', result);
-              alert('上传失败：' + (result.error?.message || '未知错误'));
-            }
-          } catch (err) {
-            console.error('❌ 上传异常:', err);
-            alert('上传异常：' + err.message);
-          }
+        if (!signRes.ok) {
+          const errorText = await signRes.text();
+          throw new Error(`签名获取失败：${signRes.status} - ${errorText}`);
         }
 
-        alert(`✅ 上传完成，共上传 ${files.length} 张图`);
-      };
+        const { signature, timestamp, apiKey } = await signRes.json();
 
-      input.click();
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('api_key', apiKey);
+        formData.append('timestamp', timestamp);
+        formData.append('signature', signature);
+        formData.append('public_id', publicId);
+
+        const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await uploadRes.json();
+        if (result.secure_url) {
+          console.log('✅ 上传成功:', result.secure_url);
+        } else {
+          console.error('❌ 上传失败:', result);
+          alert('上传失败：' + (result.error?.message || '未知错误'));
+        }
+      } catch (err) {
+        console.error('❌ 上传异常:', err);
+        alert('上传异常：' + err.message);
+      }
     }
 
+    alert(`✅ 上传完成，共上传 ${files.length} 张图`);
+  };
+
+  input.click();
+}
     loadSheet();
   </script>
 </body>
