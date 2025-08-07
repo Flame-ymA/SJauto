@@ -123,8 +123,8 @@
       });
     }
 
-    // 使用 signed upload 上传图片
-   async function uploadImageSigned(vin) {
+  // 使用 signed upload 上传图片
+async function uploadImageSigned(vin) {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
@@ -134,19 +134,20 @@
     const files = input.files;
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const filename = `${vin}${i + 1}`; // 避免覆盖
+
+      // ✅ 加入时间戳避免覆盖，文件名如 vin1_1690000000000
+      const timestampLocal = Date.now();
+      const filename = `${vin}${i + 1}_${timestampLocal}`;
+      const public_id = `${vin}/${filename}`;
 
       try {
         // 获取签名
         const signRes = await fetch('https://flameauto-write.onrender.com/get-signature', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({ 
-  public_id: `${vin}/${filename}`,
-  folder: vin  // ✅ 多传一个 folder
-})
-          // 注意路径带文件夹名
+          body: JSON.stringify({ public_id })
         });
+
         const { signature, timestamp, apiKey } = await signRes.json();
 
         const formData = new FormData();
@@ -154,8 +155,8 @@
         formData.append('api_key', apiKey);
         formData.append('timestamp', timestamp);
         formData.append('signature', signature);
-        formData.append('public_id', `${vin}/${filename}`);
-        formData.append('folder', vin);  // ✅ 这一行必须加上
+        formData.append('public_id', public_id);
+        // ⚠️ 不需要单独加 formData.append('folder', vin) 了，public_id 已包含文件夹路径
 
         const res = await fetch(`https://api.cloudinary.com/v1_1/duwckagtg/image/upload`, {
           method: 'POST',
