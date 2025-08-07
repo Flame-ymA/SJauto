@@ -1,104 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>车辆详情</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>编辑车辆描述</title>
   <style>
     body {
       background-color: #000;
       color: #FFD700;
       font-family: Arial, sans-serif;
-      margin: 0;
       padding: 20px;
-      display: flex;
-      flex-direction: row;
-      gap: 30px;
     }
-    .gallery {
-      flex: 1;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    h1 {
+      text-align: center;
     }
-    .gallery img {
+    textarea {
       width: 100%;
-      max-height: 400px;
-      object-fit: contain;
-      border: 2px solid #FFD700;
-      border-radius: 10px;
-    }
-    .nav-buttons {
-      margin-top: 10px;
-    }
-    .nav-buttons button {
-      margin: 0 5px;
-      padding: 5px 10px;
-      font-weight: bold;
-      background-color: #FFD700;
-      border: none;
-      color: #000;
-      cursor: pointer;
-    }
-    .description {
-      flex: 1;
-      background-color: #111;
-      padding: 20px;
-      border-radius: 10px;
+      height: 300px;
+      padding: 10px;
+      font-size: 16px;
       border: 1px solid #FFD700;
-    }
-    .description h2 {
-      margin-top: 0;
-    }
-    .report-link {
-      margin-top: 30px;
-      text-align: right;
-    }
-    .report-link a {
+      background-color: #111;
       color: #FFD700;
-      text-decoration: underline;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #FFD700;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      padding: 10px 20px;
+      margin-top: 20px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #e6c200;
     }
   </style>
 </head>
 <body>
-  <div class="gallery">
-    <img id="carImage" src="" alt="车辆图片" />
-    <div class="nav-buttons">
-      <button onclick="prevImage()">⬅️ 上一张</button>
-      <button onclick="nextImage()">➡️ 下一张</button>
-    </div>
-  </div>
-  <div class="description">
-    <h2>车辆描述</h2>
-    <div id="descText">加载中...</div>
-    <div class="report-link" id="report"></div>
-  </div>
+  <h1>编辑车辆描述</h1>
+  <textarea id="description"></textarea>
+  <br>
+  <button onclick="saveDescription()">保存描述</button>
 
   <script>
-    const CLOUD_NAME = 'duwckagtg';
-    const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
-    const API_KEY = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
-
     const vin = new URLSearchParams(window.location.search).get('vin');
-    let currentIndex = 0;
-    let imageUrls = [];
 
-    function loadImages() {
-      imageUrls = [];
-      for (let i = 0; i < 10; i++) {
-        const suffix = i === 0 ? 'main' : i;
-        const url = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${vin}/${vin}${suffix}.jpg`;
-        imageUrls.push(url);
+    // 先尝试从 localStorage 读取已有描述
+    document.getElementById('description').value = localStorage.getItem(`desc_${vin}`) || '';
+
+    function saveDescription() {
+      const text = document.getElementById('description').value.trim();
+      if (!text) {
+        alert('描述不能为空');
+        return;
       }
-      document.getElementById('carImage').src = imageUrls[0];
+      // 保存到 localStorage（将来可以替换为写入 Google Sheet 或数据库）
+      localStorage.setItem(`desc_${vin}`, text);
+      alert('描述已保存');
+      window.location.href = `detail.html?vin=${vin}`;
     }
-
-    function nextImage() {
-      currentIndex = (currentIndex + 1) % imageUrls.length;
-      document.getElementById('carImage').src = imageUrls[currentIndex];
-    }
-
-    function prevImage() {
-      currentIndex = (currentIndex - 1 + imageUrls.length) % imageUrls.length;
-      document.getElementById('carImage').src = imageUrls[currentIndex];
+  </script>
+</body>
+</html>
