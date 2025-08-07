@@ -73,7 +73,7 @@
           const tbody = document.querySelector('#dataTable tbody');
           tbody.innerHTML = '';
           const rows = data.values.slice(1);
-          rows.forEach((row, i) => {
+          rows.forEach((row) => {
             const tr = document.createElement('tr');
             row.forEach(cell => {
               const td = document.createElement('td');
@@ -123,7 +123,7 @@
       });
     }
 
-    // 使用 signed upload 上传图片
+    // 使用 signed upload 上传图片（命名规则：vinmain, vin1, vin2...）
     async function uploadImageSigned(vin) {
       const input = document.createElement('input');
       input.type = 'file';
@@ -134,8 +134,7 @@
         const files = input.files;
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
-          const timestampSuffix = Date.now();
-          const filename = `${vin}${i + 1}_${timestampSuffix}`;
+          const filename = i === 0 ? `${vin}main` : `${vin}${i}`;
           const publicId = `${vin}/${filename}`;
 
           try {
@@ -159,14 +158,16 @@
               body: formData
             });
 
-            const data = await res.json();
-            if (data.secure_url) {
-              console.log('✅ 上传成功:', data.secure_url);
+            const result = await res.json();
+            if (result.secure_url) {
+              console.log('✅ 上传成功:', result.secure_url);
             } else {
-              console.error('❌ 上传失败:', data);
+              console.error('❌ 上传失败:', result);
+              alert('上传失败：' + (result.error?.message || '未知错误'));
             }
           } catch (err) {
             console.error('❌ 上传异常:', err);
+            alert('上传异常：' + err.message);
           }
         }
 
