@@ -73,7 +73,7 @@
           const tbody = document.querySelector('#dataTable tbody');
           tbody.innerHTML = '';
           const rows = data.values.slice(1);
-          rows.forEach((row, i) => {
+          rows.forEach(row => {
             const tr = document.createElement('tr');
             row.forEach(cell => {
               const td = document.createElement('td');
@@ -123,68 +123,72 @@
       });
     }
 
-   // 使用 signed upload 上传图片
-async function uploadImageSigned(vin) {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.multiple = true;
+    // 使用 signed upload 上传图片
+    async function uploadImageSigned(vin) {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.multiple = true;
 
-  input.onchange = async () => {
-    const files = input.files;
+      input.onchange = async () => {
+        const files = input.files;
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      let filename;
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          let filename;
 
-      if (i === 0) {
-        // ✅ 第一张为主图，命名固定
-        filename = `${vin}main`;
-      } else {
-        // ✅ 其余带时间戳防重复
-        const timestampSuffix = Date.now();
-        filename = `${vin}${i + 1}_${timestampSuffix}`;
-      }
+          if (i === 0) {
+            filename = `${vin}main`; // ✅ 第一张主图
+          } else {
+            const timestampSuffix = Date.now();
+            filename = `${vin}${i + 1}_${timestampSuffix}`; // ✅ 其余图带时间戳
+          }
 
-      const publicId = `${vin}/${filename}`;
+          const publicId = `${vin}/${filename}`;
 
-      try {
-        const signRes = await fetch('https://flameauto-write.onrender.com/get-signature', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ public_id: publicId })
-        });
+          try {
+            const signRes = await fetch('https://flameauto-write.onrender.com/get-signature', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ public_id: publicId })
+            });
 
-        const { signature, timestamp, apiKey } = await signRes.json();
+            if (!signRes.ok) throw new Error(`签名失败: ${signRes.statusText}`);
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('api_key', apiKey);
-        formData.append('timestamp', timestamp);
-        formData.append('signature', signature);
-        formData.append('public_id', publicId);
+            const { signature, timestamp, apiKey } = await signRes.json();
 
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-          method: 'POST',
-          body: formData
-        });
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('api_key', apiKey);
+            formData.append('timestamp', timestamp);
+            formData.append('signature', signature);
+            formData.append('public_id', publicId);
 
-        const data = await res.json();
-        if (data.secure_url) {
-          console.log('✅ 上传成功:', data.secure_url);
-        } else {
-          console.error('❌ 上传失败:', data);
+            const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+              method: 'POST',
+              body: formData
+            });
+
+            const data = await uploadRes.json();
+
+            if (data.secure_url) {
+              console.log(`✅ 上传成功：${data.secure_url}`);
+            } else {
+              console.error(`❌ 上传失败：`, data);
+              alert(`❌ 上传失败：${data.error?.message || '未知错误'}`);
+            }
+          } catch (err) {
+            console.error(`❌ 上传异常:`, err);
+            alert(`❌ 上传异常：${err.message}`);
+          }
         }
-      } catch (err) {
-        console.error('❌ 上传异常:', err);
-      }
+
+        alert(`✅ 上传完成，共上传 ${files.length} 张图`);
+      };
+
+      input.click();
     }
 
-    alert(`✅ 上传完成，共上传 ${files.length} 张图`);
-  };
-
-  input.click();
-}
     loadSheet();
   </script>
 </body>
