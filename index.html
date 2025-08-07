@@ -111,8 +111,7 @@
 
         cars.forEach(row => {
           const [year, make, model, mileage, color, price, accident, status, vin] = row;
-          const imageUrl = `https://res.cloudinary.com/${CLOUDINARY_NAME}/image/upload/${vin}/${vin}main.jpg`;
-
+          const imageUrl = `https://res.cloudinary.com/${CLOUDINARY_NAME}/image/upload/${vin}main.jpg`;
           const card = document.createElement('div');
           card.className = 'car-card';
 
