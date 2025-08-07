@@ -73,7 +73,7 @@
           const tbody = document.querySelector('#dataTable tbody');
           tbody.innerHTML = '';
           const rows = data.values.slice(1);
-          rows.forEach(row => {
+          rows.forEach((row, i) => {
             const tr = document.createElement('tr');
             row.forEach(cell => {
               const td = document.createElement('td');
@@ -123,7 +123,6 @@
       });
     }
 
-    // 使用 signed upload 上传图片
     async function uploadImageSigned(vin) {
       const input = document.createElement('input');
       input.type = 'file';
@@ -135,15 +134,8 @@
 
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
-          let filename;
-
-          if (i === 0) {
-            filename = `${vin}main`; // ✅ 第一张主图
-          } else {
-            const timestampSuffix = Date.now();
-            filename = `${vin}${i + 1}_${timestampSuffix}`; // ✅ 其余图带时间戳
-          }
-
+          const timestampSuffix = Date.now();
+          const filename = `${vin}${i + 1}_${timestampSuffix}`;
           const publicId = `${vin}/${filename}`;
 
           try {
@@ -152,8 +144,6 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ public_id: publicId })
             });
-
-            if (!signRes.ok) throw new Error(`签名失败: ${signRes.statusText}`);
 
             const { signature, timestamp, apiKey } = await signRes.json();
 
@@ -169,17 +159,16 @@
               body: formData
             });
 
-            const data = await uploadRes.json();
-
-            if (data.secure_url) {
-              console.log(`✅ 上传成功：${data.secure_url}`);
+            const result = await uploadRes.json();
+            if (result.secure_url) {
+              console.log('✅ 上传成功:', result.secure_url);
             } else {
-              console.error(`❌ 上传失败：`, data);
-              alert(`❌ 上传失败：${data.error?.message || '未知错误'}`);
+              console.error('❌ 上传失败:', result);
+              alert('上传失败：' + (result.error?.message || '未知错误'));
             }
           } catch (err) {
-            console.error(`❌ 上传异常:`, err);
-            alert(`❌ 上传异常：${err.message}`);
+            console.error('❌ 上传异常:', err);
+            alert('上传异常：' + err.message);
           }
         }
 
