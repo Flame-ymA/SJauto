@@ -82,7 +82,7 @@
     // ✅ 加载 Cloudinary 图片
     async function loadImages() {
       try {
-        const response = await fetch(`https://flameauto-write.onrender.com/get-vin-images?vin=${vin}`);
+        const response = await fetch(`https://flameauto-write.onrender.com/cloudinary-search?vin=${vin}`);
         const data = await response.json();
         imageUrls = data.urls || [];
 
