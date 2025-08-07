@@ -123,64 +123,59 @@
       });
     }
 
-  // 使用 signed upload 上传图片
-async function uploadImageSigned(vin) {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.multiple = true;
+    // 使用 signed upload 上传图片
+    async function uploadImageSigned(vin) {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.multiple = true;
 
-  input.onchange = async () => {
-    const files = input.files;
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      
-      // ✅ 生成更唯一的文件名，避免重复（添加时间戳）
-      const timestampSuffix = Date.now();
-      const filename = `${vin}${i + 1}_${timestampSuffix}`;
+      input.onchange = async () => {
+        const files = input.files;
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const timestampSuffix = Date.now();
+          const filename = `${vin}${i + 1}_${timestampSuffix}`;
+          const publicId = `${vin}/${filename}`;
 
-      try {
-        // ✅ 获取签名（带 folder）
-        const signRes = await fetch('https://flameauto-write.onrender.com/get-signature', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            public_id: filename, // 只传文件名
-            folder: vin          // folder 传 VIN
-          })
-        });
+          try {
+            const signRes = await fetch('https://flameauto-write.onrender.com/get-signature', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ public_id: publicId })
+            });
 
-        const { signature, timestamp, apiKey } = await signRes.json();
+            const { signature, timestamp, apiKey } = await signRes.json();
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('api_key', apiKey);
-        formData.append('timestamp', timestamp);
-        formData.append('signature', signature);
-        formData.append('public_id', `${vin}/${filename}`); // 拼好路径
-        formData.append('folder', vin); // 明确声明 folder（可选但建议加）
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('api_key', apiKey);
+            formData.append('timestamp', timestamp);
+            formData.append('signature', signature);
+            formData.append('public_id', publicId);
 
-        const res = await fetch(`https://api.cloudinary.com/v1_1/duwckagtg/image/upload`, {
-          method: 'POST',
-          body: formData
-        });
+            const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+              method: 'POST',
+              body: formData
+            });
 
-        const data = await res.json();
-        if (data.secure_url) {
-          console.log('✅ 上传成功:', data.secure_url);
-        } else {
-          console.error('❌ 上传失败:', data);
+            const data = await res.json();
+            if (data.secure_url) {
+              console.log('✅ 上传成功:', data.secure_url);
+            } else {
+              console.error('❌ 上传失败:', data);
+            }
+          } catch (err) {
+            console.error('❌ 上传异常:', err);
+          }
         }
-      } catch (err) {
-        console.error('❌ 上传异常:', err);
-      }
+
+        alert(`✅ 上传完成，共上传 ${files.length} 张图`);
+      };
+
+      input.click();
     }
 
-    alert(`✅ 上传完成，共上传 ${files.length} 张图`);
-  };
-
-  input.click();
-}
     loadSheet();
   </script>
 </body>
