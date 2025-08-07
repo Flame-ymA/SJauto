@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SJ Auto Inventory</title>
   <style>
@@ -48,30 +48,6 @@
       border-top: 1px solid #FFD700;
       padding-top: 20px;
     }
-    .car-gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-      padding: 30px;
-    }
-    .car-card {
-      background-color: #111;
-      border: 1px solid #FFD700;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    .car-card img {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-    }
-    .car-card .info {
-      padding: 10px;
-      text-align: left;
-    }
-    .car-card .info h3 {
-      margin: 0 0 10px;
-    }
   </style>
 </head>
 <body>
@@ -89,47 +65,10 @@
       我们服务至上，为您挑选心仪爱车，<br>并提供最适合您的经济方案，让购车轻松无忧！
     </div>
 
-    <div class="car-gallery" id="carGallery"></div>
-
     <div class="contact">
       <p>销售电话：416-888-8888</p>
       <p>邮箱：info@sjauto.ca</p>
     </div>
   </div>
-
-  <script>
-    const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
-    const SHEET_NAME = 'Sheet1';
-    const API_KEY = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
-    const CLOUDINARY_NAME = 'duwckagtg';
-
-    fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`)
-      .then(res => res.json())
-      .then(data => {
-        const cars = data.values.slice(1).filter(row => row[7] !== 'sold' && row[7] !== 'deleted');
-        const container = document.getElementById('carGallery');
-
-        cars.forEach(row => {
-          const [year, make, model, mileage, color, price, accident, status, vin] = row;
-          const imageUrl = `https://res.cloudinary.com/${CLOUDINARY_NAME}/image/upload/${vin}main.jpg`;
-          const card = document.createElement('div');
-          card.className = 'car-card';
-
-          card.innerHTML = `
-            <img src="${imageUrl}" alt="${make} ${model}" onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'" />
-            <div class="info">
-              <h3>${year} ${make} ${model}</h3>
-              <p>里程数: ${mileage}</p>
-              <p>颜色: ${color}</p>
-              <p>价格: ${price}</p>
-              <p>事故记录: ${accident}</p>
-            </div>
-          `;
-
-          container.appendChild(card);
-        });
-      })
-      .catch(err => console.error('加载车辆数据失败：', err));
-  </script>
 </body>
 </html>
