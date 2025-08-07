@@ -108,7 +108,9 @@
           const button = document.createElement("button");
           button.textContent = "查看详细";
           button.className = "detail-btn";
-          // TODO: 添加点击跳转逻辑
+          button.onclick = () => {
+           window.location.href = `detail.html?vin=${vin}`;
+          };
           detail.appendChild(button);
 
           card.appendChild(img);
