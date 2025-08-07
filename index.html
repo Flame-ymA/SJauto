@@ -36,17 +36,30 @@
     }
     .content {
       padding: 30px 20px;
-      text-align: center;
     }
-    .slogan {
-      font-size: 22px;
+    .car {
+      display: flex;
+      align-items: center;
+      background-color: #111;
+      border: 1px solid #FFD700;
+      border-radius: 10px;
       margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .car img {
+      width: 300px;
+      height: 200px;
+      object-fit: cover;
+    }
+    .car-info {
+      padding: 15px;
     }
     .contact {
       font-size: 16px;
       margin-top: 40px;
       border-top: 1px solid #FFD700;
       padding-top: 20px;
+      text-align: center;
     }
   </style>
 </head>
@@ -57,18 +70,22 @@
     <a href="#">租车</a>
   </nav>
 
-  <!-- 海报图（可更换为后台上传） -->
   <img src="https://images.unsplash.com/photo-1549924231-f129b911e442?auto=format&fit=crop&w=1350&q=80" alt="SJ Auto Banner" class="banner" />
 
-  <div class="content">
-    <div class="slogan">
-      我们服务至上，为您挑选心仪爱车，<br>并提供最适合您的经济方案，让购车轻松无忧！
-    </div>
-
-    <div class="contact">
-      <p>销售电话：416-888-8888</p>
-      <p>邮箱：info@sjauto.ca</p>
-    </div>
+  <div class="content" id="carContainer">
+    <h2>库存展示</h2>
+    <!-- JS 插入车辆展示卡片 -->
   </div>
-</body>
-</html>
+
+  <div class="contact">
+    <p>销售电话：416-888-8888</p>
+    <p>邮箱：info@sjauto.ca</p>
+  </div>
+
+  <script>
+    const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
+    const SHEET_NAME = 'Sheet1';
+    const API_KEY = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
+    const CLOUDINARY_NAME = 'duwckagtg';
+
+    async function loadInventory() {
