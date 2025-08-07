@@ -95,7 +95,7 @@
             editBtn.className = 'btn';
             editBtn.textContent = '编辑描述';
             editBtn.onclick = () => {
-              window.location.href = `edit-description.html?vin=${vin}`;
+              window.open(`edit-description.html?vin=${vin}`, '_blank');
             };
             tdUpload.appendChild(editBtn);
 
