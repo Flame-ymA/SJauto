@@ -1,130 +1,133 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>车辆详情</title>
-  <style>
-    body {
-      background-color: #000;
-      color: #FFD700;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      flex-direction: row;
-      gap: 30px;
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>车辆详情 - SJ Auto</title>
+  <!-- Tailwind（开发/预览用）。生产请改本地构建版 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sjgold: '#FFD700'
+          },
+          boxShadow: {
+            'gold': '0 10px 25px -5px rgba(255,215,0,0.15), 0 8px 10px -6px rgba(255,215,0,0.08)'
+          }
+        }
+      }
     }
-    .gallery {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-   .gallery img {
-  width: 600px;
-  height: 400px;
-  object-fit: cover; /* 固定尺寸，填满并裁剪 */
-  border: 2px solid #FFD700;
-  border-radius: 10px;
-}
-    .nav-buttons {
-      margin-top: 10px;
-    }
-    .nav-buttons button {
-      margin: 0 5px;
-      padding: 5px 10px;
-      font-weight: bold;
-      background-color: #FFD700;
-      border: none;
-      color: #000;
-      cursor: pointer;
-    }
-    .description {
-      flex: 1;
-      background-color: #111;
-      padding: 20px;
-      border-radius: 10px;
-      border: 1px solid #FFD700;
-    }
-    .description h2 {
-      margin-top: 0;
-    }
-    .report-link {
-      margin-top: 30px;
-      text-align: right;
-    }
-    .report-link a {
-      color: #FFD700;
-      text-decoration: underline;
-    }
-  </style>
+  </script>
 </head>
-<body>
-  <div class="gallery">
-    <img id="carImage" src="" alt="车辆图片" />
-    <div class="nav-buttons">
-      <button onclick="prevImage()">⬅️ 上一张</button>
-      <button onclick="nextImage()">➡️ 下一张</button>
+<body class="min-h-screen bg-black text-sjgold">
+  <!-- 顶部条（可按需隐藏） -->
+  <header class="sticky top-0 z-10 backdrop-blur bg-black/60 border-b border-sjgold/20">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="text-sm md:text-base opacity-80 hover:opacity-100">← 返回首页</a>
+      <div id="vinBadge" class="text-xs md:text-sm tracking-wider opacity-70"></div>
     </div>
-  </div>
-  <div class="description">
-    <h2>车辆描述</h2>
-    <div id="descText">加载中...</div>
-    <div class="report-link" id="report"></div>
-  </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6 md:py-10">
+    <!-- 主内容：左大图 / 右描述，5 列：左 3，右 2 -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-8 items-start">
+      <!-- 图廊（左侧更宽） -->
+      <section class="md:col-span-3 w-full flex flex-col items-center">
+        <div
+          class="w-full md:w-[720px] h-[280px] sm:h-[360px] md:h-[480px] 
+                 bg-neutral-900/70 rounded-2xl ring-1 ring-sjgold/20 
+                 shadow-gold overflow-hidden flex items-center justify-center">
+          <img
+            id="carImage"
+            alt="车辆图片"
+            class="w-full h-full object-cover select-none"
+            src="https://placehold.co/720x480/111111/FFD700?text=Loading..."
+          />
+        </div>
+
+        <!-- 导航按钮 -->
+        <div class="mt-4 flex gap-3">
+          <button
+            class="px-4 py-2 rounded-xl bg-sjgold text-black font-semibold
+                   hover:brightness-95 active:brightness-90 transition
+                   ring-1 ring-sjgold/30 shadow-gold"
+            onclick="prevImage()">⬅️ 上一张</button>
+          <button
+            class="px-4 py-2 rounded-xl bg-sjgold text-black font-semibold
+                   hover:brightness-95 active:brightness-90 transition
+                   ring-1 ring-sjgold/30 shadow-gold"
+            onclick="nextImage()">➡️ 下一张</button>
+        </div>
+
+        <!-- 缩略图（可选） -->
+        <div id="thumbs" class="mt-5 grid grid-cols-6 gap-2 w-full md:w-[720px]"></div>
+      </section>
+
+      <!-- 描述（右侧稍窄） -->
+      <aside
+        class="md:col-span-2 w-full 
+               bg-neutral-950/70 rounded-2xl ring-1 ring-sjgold/15 shadow-gold
+               p-5 md:p-6">
+        <h2 class="text-xl md:text-2xl font-bold mb-3">车辆描述</h2>
+        <div id="descText" class="leading-relaxed text-sjgold/90">
+          加载中...
+        </div>
+
+        <div id="report" class="mt-8 text-right">
+          <!-- 如果你之后要放事故报告链接，可在这里注入 -->
+        </div>
+      </aside>
+    </div>
+  </main>
 
   <script>
     const vin = new URLSearchParams(window.location.search).get('vin');
+    const vinBadge = document.getElementById('vinBadge');
+    if (vin) vinBadge.textContent = `VIN: ${vin}`;
+
     let currentIndex = 0;
     let imageUrls = [];
 
-  // ✅ 加载 Cloudinary 图片（从后端 search 接口获取）
-async function loadImages() {
-  try {
-    const response = await fetch(`https://flameauto-write.onrender.com/cloudinary-search?vin=${vin}`);
-    const data = await response.json();
-
-    const resources = data.resources || [];
-    imageUrls = resources.map((img) => img.secure_url);  // 从每个资源提取出图片 URL
-
-    if (imageUrls.length === 0) {
-      document.getElementById('carImage').src = 'https://placehold.co/600x400?text=No+Image';
-    } else {
-      document.getElementById('carImage').src = imageUrls[0];
-    }
-  } catch (error) {
-    console.error('加载图片失败', error);
-    document.getElementById('carImage').src = 'https://placehold.co/600x400?text=Error';
-  }
-}
-
-    // ✅ 加载描述文字
-    async function loadDescription() {
-      const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
-      const API_KEY = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
+    // ✅ 加载 Cloudinary 图片（后端 search 接口）
+    async function loadImages() {
       try {
-        const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1?key=${API_KEY}`);
-        const data = await res.json();
-        const headers = data.values[0];
-        const vinIndex = headers.indexOf("VIN");
-        const detailIndex = headers.indexOf("Detail");
+        const response = await fetch(`https://flameauto-write.onrender.com/cloudinary-search?vin=${vin}`);
+        const data = await response.json();
 
-        if (vinIndex === -1 || detailIndex === -1) {
-          document.getElementById('descText').textContent = '未找到描述字段';
-          return;
-        }
+        const resources = data.resources || [];
+        imageUrls = resources.map(img => img.secure_url);
 
-        const row = data.values.find(row => row[vinIndex] === vin);
-        if (row) {
-          document.getElementById('descText').textContent = row[detailIndex] || '暂无描述';
+        const imgEl = document.getElementById('carImage');
+        if (imageUrls.length === 0) {
+          imgEl.src = 'https://placehold.co/720x480/111111/FFD700?text=No+Image';
         } else {
-          document.getElementById('descText').textContent = '未找到该车辆';
+          imgEl.src = imageUrls[0];
+          renderThumbs();
         }
-      } catch (err) {
-        console.error('加载描述失败:', err);
-        document.getElementById('descText').textContent = '描述加载失败';
+      } catch (error) {
+        console.error('加载图片失败', error);
+        document.getElementById('carImage').src =
+          'https://placehold.co/720x480/111111/FFD700?text=Error';
       }
+    }
+
+    // ✅ 缩略图渲染（可点击切换）
+    function renderThumbs() {
+      const wrap = document.getElementById('thumbs');
+      wrap.innerHTML = '';
+      imageUrls.forEach((url, idx) => {
+        const btn = document.createElement('button');
+        btn.className =
+          'relative aspect-[4/3] w-full overflow-hidden rounded-lg ring-1 ring-sjgold/20 hover:ring-sjgold/40 transition';
+        btn.innerHTML = `<img src="${url}" class="w-full h-full object-cover" alt="thumb ${idx+1}">`;
+        btn.onclick = () => {
+          currentIndex = idx;
+          document.getElementById('carImage').src = imageUrls[currentIndex];
+        };
+        wrap.appendChild(btn);
+      });
     }
 
     function nextImage() {
@@ -137,6 +140,37 @@ async function loadImages() {
       if (!imageUrls.length) return;
       currentIndex = (currentIndex - 1 + imageUrls.length) % imageUrls.length;
       document.getElementById('carImage').src = imageUrls[currentIndex];
+    }
+
+    // ✅ 加载描述文字（Google Sheets）
+    async function loadDescription() {
+      const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
+      const API_KEY  = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
+      try {
+        const res  = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1?key=${API_KEY}`);
+        const data = await res.json();
+
+        const headers    = data.values?.[0] || [];
+        const vinIndex   = headers.indexOf('VIN');
+        const detailIndex= headers.indexOf('Detail');
+
+        const descEl = document.getElementById('descText');
+
+        if (vinIndex === -1 || detailIndex === -1) {
+          descEl.textContent = '未找到描述字段';
+          return;
+        }
+
+        const row = data.values.find(r => r[vinIndex] === vin);
+        if (row) {
+          descEl.textContent = row[detailIndex] || '暂无描述';
+        } else {
+          descEl.textContent = '未找到该车辆';
+        }
+      } catch (err) {
+        console.error('加载描述失败:', err);
+        document.getElementById('descText').textContent = '描述加载失败';
+      }
     }
 
     loadImages();
