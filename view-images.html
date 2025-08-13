@@ -21,10 +21,11 @@
   <style>
     :root { --sj: #FFD700; }
     .sj-gold { color: var(--sj); }
-    /* 固定图片尺寸容器：不随屏幕变化 */
+
+    /* 固定图片尺寸容器（不随屏幕变化） */
     .img-box {
-      width: 960px;   /* 固定宽度 */
-      height: 540px;  /* 固定高度（16:9）*/
+      width: 960px;        /* 固定宽度 */
+      height: 540px;       /* 固定高度（16:9）*/
       overflow: hidden;
       border-radius: 14px;
       border: 1px solid rgba(255,215,0,.35);
@@ -33,42 +34,49 @@
     .img-box img {
       width: 100%;
       height: 100%;
-      object-fit: cover;   /* 填满并裁切，保持冲击力 */
+      object-fit: cover;
       image-rendering: auto;
     }
 
-    /* 让整页居中展示固定尺寸图片 */
-    .page-width {
-      max-width: 100%;
+    /* 横向滚动容器（小屏不压缩图片，允许左右拖动） */
+    .hscroll {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    /* 为了在小屏时不被压缩，内部容器最小宽度=图片宽度 */
+    .hscroll-inner {
+      min-width: 960px;
+      display: inline-block;
     }
   </style>
 </head>
 <body class="min-h-screen bg-black text-neutral-200">
-  <!-- 顶部 -->
+  <!-- 顶部：仅返回审核 -->
   <header class="sticky top-0 z-10 bg-black/70 backdrop-blur border-b border-sjgold/30">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="admin-review.html" class="text-sm px-3 py-1 rounded hover:bg-white/5">&larr; 返回审核</a>
+      <a href="admin-review.html" class="h-9 inline-flex items-center px-3 rounded-lg bg-sjgold text-black font-semibold hover:brightness-95 active:brightness-90">
+        ← 返回审核
+      </a>
       <div id="title" class="text-base md:text-lg font-semibold sj-gold">车辆图片</div>
-      <a href="index.html" class="text-sm px-3 py-1 rounded hover:bg-white/5">首页</a>
+      <div class="text-sm opacity-0 select-none">spacer</div>
     </div>
   </header>
 
   <!-- 主体 -->
-  <main class="page-width mx-auto px-4 py-8">
-    <div class="max-w-6xl mx-auto">
-      <div id="meta" class="mb-6 text-sm text-neutral-400">加载中…</div>
+  <main class="mx-auto px-4 py-8 max-w-6xl">
+    <div id="meta" class="mb-6 text-sm text-neutral-400">加载中…</div>
 
-      <!-- 固定尺寸的图片列表：一张接一张竖着排 -->
-      <section id="list" class="flex flex-col items-center gap-6">
-        <!-- 图片卡片由 JS 注入 -->
-      </section>
+    <!-- 固定尺寸图片列表：一张接一张竖排 -->
+    <section id="list" class="flex flex-col items-center gap-6">
+      <!-- 由 JS 注入 -->
+    </section>
 
-      <div id="empty" class="hidden mt-10 text-center text-neutral-400">未找到该 VIN 的图片</div>
-    </div>
+    <div id="empty" class="hidden mt-10 text-center text-neutral-400">未找到该 VIN 的图片</div>
   </main>
 
   <script>
-    const BACKEND = 'https://flameauto-write.onrender.com'; // 你的后端
+    const BACKEND = 'https://flameauto-write.onrender.com';
     const vin = new URLSearchParams(location.search).get('vin') || '';
     const listEl = document.getElementById('list');
     const emptyEl = document.getElementById('empty');
@@ -84,70 +92,82 @@
       loadImages(vin);
     }
 
-    async function loadImages(vin) {
+    async function loadImages(v) {
       try {
-        const res = await fetch(`${BACKEND}/cloudinary-search?vin=${encodeURIComponent(vin)}`);
+        const res = await fetch(`${BACKEND}/cloudinary-search?vin=${encodeURIComponent(v)}`);
         const data = await res.json();
 
         const items = Array.isArray(data.resources) ? data.resources : [];
         if (!items.length) {
-          metaEl.textContent = `VIN：${vin}`;
+          metaEl.textContent = `VIN：${v}`;
           emptyEl.classList.remove('hidden');
           return;
         }
 
-        // 排序：vinmain -> vin1..vin9… -> 其他
-        const sorted = items
-          .slice()
-          .sort((a, b) => orderKey(a.public_id).localeCompare(orderKey(b.public_id)));
+        // 排序：VINmain -> VIN1..VIN9… -> 其他
+        const sorted = items.slice().sort((a, b) => orderKey(a.public_id).localeCompare(orderKey(b.public_id)));
 
-        // 渲染固定尺寸图片
         listEl.innerHTML = '';
         sorted.forEach((r, idx) => {
           const card = document.createElement('article');
-          card.className = 'flex flex-col items-center gap-2';
+          card.className = 'w-full flex flex-col items-center gap-2';
 
-          const label = document.createElement('div');
-          label.className = 'text-xs text-neutral-400';
-          label.textContent = `${idx + 1}/${sorted.length} · ${r.public_id || ''}`;
+          const labelTop = document.createElement('div');
+          labelTop.className = 'text-xs text-neutral-400';
+          labelTop.textContent = `${idx + 1}/${sorted.length}`;
+
+          // 横向滚动容器（小屏可左右拖动）
+          const hscroll = document.createElement('div');
+          hscroll.className = 'hscroll';
+          const inner = document.createElement('div');
+          inner.className = 'hscroll-inner';
 
           const box = document.createElement('div');
           box.className = 'img-box shadow-glow';
 
-          // 使用 secure_url；浏览器按需加载
           const img = document.createElement('img');
-          img.loading = 'lazy';
+          img.loading  = 'lazy';
           img.decoding = 'async';
-          img.src = r.secure_url;
+          img.src      = r.secure_url;
+          img.alt      = r.public_id || 'vehicle-image';
+          img.onerror  = () => {
+            img.src = 'https://placehold.co/960x540/111111/FFD700?text=Image+Unavailable';
+          };
 
           box.appendChild(img);
-          card.appendChild(box);
-          card.appendChild(label);
+          inner.appendChild(box);
+          hscroll.appendChild(inner);
+
+          const labelBottom = document.createElement('div');
+          labelBottom.className = 'text-[11px] text-neutral-500 break-all text-center';
+          labelBottom.textContent = r.public_id || '';
+
+          card.appendChild(labelTop);
+          card.appendChild(hscroll);
+          card.appendChild(labelBottom);
           listEl.appendChild(card);
         });
 
-        metaEl.textContent = `VIN：${vin} · 共 ${sorted.length} 张`;
+        metaEl.textContent = `VIN：${v} · 共 ${sorted.length} 张`;
       } catch (e) {
         console.error(e);
-        metaEl.textContent = `VIN：${vin} · 加载失败`;
+        metaEl.textContent = `VIN：${v} · 加载失败`;
         emptyEl.textContent = '加载图片失败，请稍后再试';
         emptyEl.classList.remove('hidden');
       }
     }
 
-    // 把 public_id 转换为排序用 key：
-    //  .../VIN/VINmain → 000_main
-    //  .../VIN/VIN1    → 001
-    //  .../VIN/VIN10   → 010
-    //  其他放最后
+    // 生成排序 key：
+    //  VINmain → 000_main
+    //  VIN1    → 001
+    //  VIN10   → 010
+    //  其他    → zzz_xxx
     function orderKey(publicId = '') {
-      const p = publicId.split('/').pop() || ''; // 文件名部分
+      const p = publicId.split('/').pop() || '';
       if (/main$/i.test(p)) return '000_main';
-      const m = p.match(/(\d+)$/); // 末尾数字
-      if (m) {
-        return String(m[1]).padStart(3, '0'); // 001, 002, ...
-      }
-      return 'zzz_' + p; // 其他排在最后
+      const m = p.match(/(\d+)$/);
+      if (m) return String(m[1]).padStart(3, '0');
+      return 'zzz_' + p;
     }
   </script>
 </body>
