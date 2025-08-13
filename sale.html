@@ -82,28 +82,33 @@
       <!-- 配置单照片上传（可多选） -->
       <div>
         <label class="block text-sm mb-2">配置单明细（可选，支持多张）</label>
-        <div class="flex items-center gap-3">
-          <input id="configImages" type="file" accept="image/*" multiple
-                 class="block w-full text-sm text-neutral-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-yellow-500 file:text-black hover:file:bg-yellow-400" />
-<button type="button" id="btnUpload"
-  class="relative inline-flex items-center justify-center gap-2 px-4 py-2 
-         rounded-lg font-medium text-sm text-black
-         bg-gradient-to-b from-yellow-400 to-yellow-500 
-         shadow-[0_4px_14px_rgba(255,215,0,0.4)] 
-         hover:shadow-[0_6px_20px_rgba(255,215,0,0.6)] 
-         hover:brightness-105 active:brightness-95 
-         transition-all duration-200 ease-in-out">
-  
-  <!-- 上传图标 -->
-  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" 
-       viewBox="0 0 24 24" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-          d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2m-4-4l-4-4m0 0l-4 4m4-4v12" />
+       <div class="flex items-center gap-3 flex-wrap">
+  <input id="configImages" type="file" accept="image/*" multiple
+         class="block w-full sm:w-auto text-sm text-neutral-300
+                file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0
+                file:text-sm file:font-semibold file:bg-yellow-500 file:text-black
+                hover:file:bg-yellow-400" />
+  <!-- 这里放上面的按钮 -->
+         <button
+  type="button"
+  id="btnUpload"
+  class="inline-flex items-center justify-center gap-2 
+         px-5 h-10 rounded-full
+         bg-gradient-to-b from-yellow-400 to-yellow-500 text-black
+         font-medium text-[14px] leading-none
+         whitespace-nowrap break-keep
+         shadow-[0_4px_14px_rgba(255,215,0,0.35)]
+         hover:shadow-[0_6px_20px_rgba(255,215,0,0.55)]
+         hover:brightness-105 active:scale-95 transition-all">
+  <!-- 小图标（可删） -->
+  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 16a1 1 0 0 1-1-1V8.41l-2.3 2.3a1 1 0 1 1-1.4-1.42l4-4a1 1 0 0 1 1.4 0l4 4a1 1 0 1 1-1.4 1.42L13 8.4V15a1 1 0 0 1-1 1Z"/>
+    <path d="M5 18a3 3 0 0 1-1-5.83 5 5 0 0 1 9.58-2.14A4 4 0 1 1 17 18H5Z"/>
   </svg>
-  
   上传图片
 </button>
-        </div>
+</div>
+        
         <p class="mt-1 text-xs text-neutral-400">先选择文件，再点“上传图片”。如未上传，也可直接提交表单。</p>
 
         <!-- 上传进度 & 预览 -->
