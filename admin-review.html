@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>SJ Auto · 客户上传审核</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- Tailwind（预览/开发用） -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { sjgold: '#FFD700' },
+          boxShadow: {
+            glow: '0 0 0 1px rgba(255,215,0,0.25), 0 10px 25px -5px rgba(0,0,0,0.5)'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-screen bg-black text-neutral-200">
+  <!-- 顶部 -->
+  <header class="sticky top-0 z-10 bg-black/70 backdrop-blur border-b border-sjgold/30">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-3">
+        <img src="https://res.cloudinary.com/duwckagtg/image/upload/v1754600465/image_j1peaj.png" alt="SJ" class="h-8 w-8 rounded ring-1 ring-white/10"/>
+        <span class="font-semibold tracking-wider text-sjgold">SJ Auto</span>
+      </a>
+      <nav class="text-sm">
+        <a href="index.html" class="px-3 py-1 rounded hover:bg-white/5">首页</a>
+        <a href="buy.html" class="px-3 py-1 rounded hover:bg-white/5">买车</a>
+        <a href="sale.html" class="px-3 py-1 rounded hover:bg-white/5">卖车</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <div class="flex items-end justify-between gap-4">
+      <div>
+        <h1 class="text-2xl md:text-3xl font-bold text-sjgold">客户上传审核</h1>
+        <p class="mt-1 text-sm text-neutral-400">来源：Google Sheets / Sheet2（VIN、Mileage、Accident、Exterior Color、Interior Color、ConfigURLs、CreatedAt）</p>
+      </div>
+      <button id="refreshBtn" class="h-10 px-4 rounded-lg bg-sjgold text-black font-semibold hover:brightness-95 active:brightness-90 shadow-glow">
+        刷新
+      </button>
+    </div>
+
+    <!-- 搜索/筛选 -->
+    <section class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+      <input id="searchVin" type="text" placeholder="按 VIN 搜索…" class="w-full h-10 rounded-lg bg-zinc-900/70 border border-sjgold/30 px-3 outline-none focus:ring-2 focus:ring-yellow-500">
+      <input id="searchColor" type="text" placeholder="按颜色（内/外）搜索…" class="w-full h-10 rounded-lg bg-zinc-900/70 border border-sjgold/30 px-3 outline-none focus:ring-2 focus:ring-yellow-500">
+      <select id="searchAcc" class="w-full h-10 rounded-lg bg-zinc-900/70 border border-sjgold/30 px-3 outline-none focus:ring-2 focus:ring-yellow-500">
+        <option value="">按事故筛选（全部）</option>
+        <option>无事故</option>
+        <option>小事故/轻微维修</option>
+        <option>有事故（可提供报告）</option>
+        <option>不确定</option>
+      </select>
+    </section>
+
+    <!-- 列表 -->
+    <section id="cards" class="mt-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <!-- 卡片由 JS 注入 -->
+    </section>
+
+    <div id="emptyTip" class="hidden mt-10 text-center text-neutral-400">暂无数据</div>
+  </main>
+
+  <script>
+    const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
+    const API_KEY = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
+    const SHEET_NAME = 'Sheet2'; // ← 从 Sheet2 拉数据
+    const cardsEl = document.getElementById('cards');
+    const emptyTip = document.getElementById('emptyTip');
+
+    const searchVin = document.getElementById('searchVin');
+    const searchColor = document.getElementById('searchColor');
+    const searchAcc = document.getElementById('searchAcc');
+
+    let allRows = []; // 原始数据（去掉表头）
+
+    async function loadSheet2() {
+      cardsEl.innerHTML = '';
+      emptyTip.classList.add('hidden');
+
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}?key=${API_KEY}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (!data.values || data.values.length === 0) {
+        emptyTip.classList.remove('hidden');
+        return;
+      }
+
+      const headers = data.values[0].map(v => String(v || '').trim());
+      // 需要的列
+      const vinIdx     = headers.indexOf('VIN');
+      const milIdx     = headers.indexOf('Mileage');
+      const accIdx     = headers.indexOf('Accident');
+      const exColIdx   = headers.indexOf('Exterior Color');
+      const inColIdx   = headers.indexOf('Interior Color');
+      const cfgIdx     = headers.indexOf('ConfigURLs');
+      const timeIdx    = headers.indexOf('CreatedAt');
+
+      // 容错：如果用户表头拼写不同，给点提示
+      if (vinIdx === -1 || milIdx === -1 || accIdx === -1) {
+        cardsEl.innerHTML = '<div class="text-sm text-red-400">Sheet2 表头缺少必需字段（VIN / Mileage / Accident）。</div>';
+        return;
+      }
+
+      allRows = data.values.slice(1); // 去掉表头
+      render();
+    }
+
+    function render() {
+      const qVin = searchVin.value.trim().toUpperCase();
+      const qColor = searchColor.value.trim().toLowerCase();
+      const qAcc = searchAcc.value;
+
+      cardsEl.innerHTML = '';
+      let count = 0;
+
+      // 使用表头索引（重新取一遍，确保 render 时可用）
+      const headers = ['VIN','Mileage','Accident','Exterior Color','Interior Color','ConfigURLs','CreatedAt'];
+      const vinIdx = 0, milIdx = 1, accIdx = 2, exColIdx = 3, inColIdx = 4, cfgIdx = 5, timeIdx = 6;
+
+      allRows.forEach(row => {
+        const VIN = String(row[vinIdx] || '').toUpperCase();
+        const mileage = String(row[milIdx] || '');
+        const accident = String(row[accIdx] || '');
+        const exColor = String(row[exColIdx] || '');
+        const inColor = String(row[inColIdx] || '');
+        const cfg = String(row[cfgIdx] || '');
+        const createdAt = String(row[timeIdx] || '');
+
+        // 筛选
+        if (qVin && !VIN.includes(qVin)) return;
+        if (qAcc && accident !== qAcc) return;
+        if (qColor) {
+          const mix = (exColor + ' ' + inColor).toLowerCase();
+          if (!mix.includes(qColor)) return;
+        }
+
+        const urls = cfg
+          .split(',')
+          .map(s => s.trim())
+          .filter(u => u && /^https?:\/\//i.test(u));
+
+        const card = document.createElement('article');
+        card.className = 'rounded-2xl border border-sjgold/30 bg-zinc-950/60 shadow-glow p-4 flex flex-col gap-3';
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="text-xs text-neutral-400">VIN</div>
+              <div class="font-mono tracking-wider text-sjgold">${VIN || '-'}</div>
+            </div>
+            <div class="text-right text-xs text-neutral-400">${createdAt ? new Date(createdAt).toLocaleString() : ''}</div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <div><span class="text-neutral-400">里程：</span>${mileage || '-'}</div>
+            <div><span class="text-neutral-400">事故：</span>${accident || '-'}</div>
+            <div><span class="text-neutral-400">外部颜色：</span>${exColor || '-'}</div>
+            <div><span class="text-neutral-400">内部颜色：</span>${inColor || '-'}</div>
+          </div>
+
+          <div class="mt-1">
+            <div class="text-sm text-neutral-400 mb-2">配置单图片（${urls.length}）</div>
+            <div class="grid grid-cols-3 gap-2">
+              ${urls.map(u => `
+                <a href="${u}" target="_blank" class="block rounded overflow-hidden ring-1 ring-white/10 hover:ring-sjgold/60">
+                  <img src="${u}" class="w-full h-24 object-cover" alt="config"/>
+                </a>
+              `).join('')}
+            </div>
+          </div>
+        `;
+
+        cardsEl.appendChild(card);
+        count++;
+      });
+
+      if (count === 0) {
+        emptyTip.classList.remove('hidden');
+      } else {
+        emptyTip.classList.add('hidden');
+      }
+    }
+
+    // 事件绑定
+    document.getElementById('refreshBtn').addEventListener('click', loadSheet2);
+    searchVin.addEventListener('input', render);
+    searchColor.addEventListener('input', render);
+    searchAcc.addEventListener('change', render);
+
+    // 进来就加载
+    loadSheet2();
+  </script>
+</body>
+</html>
