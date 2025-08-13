@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>SJ Auto Inventory Admin Panel</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <!-- Tailwind CDN（生产建议改为构建版本） -->
+  <!-- Tailwind CDN（开发/预览用） -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -18,11 +18,16 @@
       }
     }
   </script>
+  <style>
+    /* 让 header 的高度是确定的，方便 sticky 的 top 偏移 */
+    .app-header { height: 64px; }
+  </style>
 </head>
 <body class="min-h-screen bg-black text-sjgold">
-  <!-- 顶部栏 -->
-  <header class="sticky top-0 z-10 bg-zinc-950/80 backdrop-blur border-b border-sjgold/30">
-    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+
+  <!-- 顶部栏（固定高度 64px） -->
+  <header class="app-header sticky top-0 z-20 bg-zinc-950/80 backdrop-blur border-b border-sjgold/30">
+    <div class="max-w-6xl mx-auto h-full px-4 flex items-center justify-between">
       <h1 class="text-xl md:text-2xl font-semibold tracking-wide">SJ Auto · Admin</h1>
       <div class="flex items-center gap-3">
         <label class="inline-flex items-center gap-3 px-3 py-2 rounded-xl border border-sjgold/30 hover:border-sjgold/60 transition">
@@ -38,32 +43,46 @@
 
   <!-- 主体 -->
   <main class="max-w-6xl mx-auto px-4 py-6">
-    <div class="rounded-2xl border border-sjgold/30 bg-zinc-950/60 shadow-glow">
+    <div class="rounded-2xl border border-sjgold/30 bg-zinc-950/60 shadow-glow overflow-hidden">
       <div class="px-5 py-4 border-b border-sjgold/20 flex items-center justify-between">
         <h2 class="text-lg font-semibold">库存列表</h2>
         <span id="rowCount" class="text-xs text-sjgold/70"></span>
       </div>
 
-      <!-- 固定高度 + 可滚动容器，表头 sticky 参照它 -->
-      <div class="max-h-[70vh] overflow-auto">
-        <table class="min-w-full text-sm">
-          <!-- 表头吸顶从容器顶部算起，避免盖住第一行 -->
-          <thead class="sticky top-0 z-10 bg-zinc-900 border-b border-sjgold/20 shadow-sm">
+      <!-- 可滚动容器 -->
+      <div class="overflow-auto">
+        <!-- 固定列宽：colgroup + table-fixed -->
+        <table class="min-w-full text-sm table-fixed">
+          <colgroup>
+            <col style="width:5.5rem" />  <!-- Year -->
+            <col style="width:6.5rem" />  <!-- Make -->
+            <col style="width:8rem" />    <!-- Model -->
+            <col style="width:8rem" />    <!-- Mileage -->
+            <col style="width:9rem" />    <!-- Color -->
+            <col style="width:8rem" />    <!-- Price -->
+            <col style="width:8rem" />    <!-- Accident -->
+            <col style="width:6rem" />    <!-- Status -->
+            <col style="width:14rem" />   <!-- VIN -->
+            <col style="width:12rem" />   <!-- 操作 -->
+          </colgroup>
+
+          <thead class="bg-zinc-900 sticky z-10 border-b border-sjgold/20" style="top:64px;">
             <tr class="text-left">
               <th class="px-4 py-3 font-semibold">Year</th>
               <th class="px-4 py-3 font-semibold">Make</th>
               <th class="px-4 py-3 font-semibold">Model</th>
               <th class="px-4 py-3 font-semibold">Mileage</th>
               <th class="px-4 py-3 font-semibold">Color</th>
-              <th class="px-4 py-3 font-semibold">Price</th>
+              <th class="px-4 py-3 font-semibold">Price (CAD)</th>
               <th class="px-4 py-3 font-semibold">Accident</th>
               <th class="px-4 py-3 font-semibold">Status</th>
               <th class="px-4 py-3 font-semibold">VIN</th>
               <th class="px-4 py-3 font-semibold text-center">操作</th>
             </tr>
           </thead>
+
           <tbody id="tableBody" class="divide-y divide-sjgold/10">
-            <!-- rows injected here -->
+            <!-- 行数据由 JS 注入 -->
           </tbody>
         </table>
       </div>
@@ -98,11 +117,11 @@
           const tr = document.createElement('tr');
           tr.className = 'hover:bg-zinc-900/60 transition';
 
-          // 仅显示 0~8 列（不显示 Detail）
+          // ✅ 仅显示 0~8 列（不显示 Detail）
           const displayCols = [0,1,2,3,4,5,6,7,8];
           displayCols.forEach(colIndex => {
             const td = document.createElement('td');
-            td.className = 'px-4 py-3';
+            td.className = 'px-4 py-3 truncate'; // 超出用省略号
             td.textContent = row[colIndex] || '';
             tr.appendChild(td);
           });
@@ -115,17 +134,15 @@
           wrap.className = 'flex justify-center gap-2';
 
           const uploadBtn = document.createElement('button');
-          uploadBtn.className = 'px-3 py-1.5 rounded-lg bg-sjgold text-black font-semibold hover:brightness-95 active:brightness-90 transition';
+          uploadBtn.className = 'w-24 px-3 py-1.5 rounded-lg bg-sjgold text-black font-semibold hover:brightness-95 active:brightness-90 transition';
           uploadBtn.textContent = 'Upload';
           uploadBtn.onclick = () => uploadImageSigned(vin);
           wrap.appendChild(uploadBtn);
 
           const editBtn = document.createElement('button');
-          editBtn.className = 'px-3 py-1.5 rounded-lg border border-sjgold/40 text-sjgold hover:bg-zinc-900 active:bg-zinc-800 transition';
+          editBtn.className = 'w-24 px-3 py-1.5 rounded-lg border border-sjgold/40 text-sjgold hover:bg-zinc-900 active:bg-zinc-800 transition';
           editBtn.textContent = '编辑描述';
-          editBtn.onclick = () => {
-            window.open(`edit-description.html?vin=${encodeURIComponent(vin)}`, '_blank');
-          };
+          editBtn.onclick = () => window.open(`edit-description.html?vin=${encodeURIComponent(vin)}`, '_blank');
           wrap.appendChild(editBtn);
 
           tdOps.appendChild(wrap);
@@ -142,10 +159,8 @@
     async function uploadExcel() {
       const fileInput = document.getElementById('excelFile');
       const file = fileInput.files[0];
-      if (!file) {
-        alert('请先选择文件');
-        return;
-      }
+      if (!file) return alert('请先选择文件');
+
       const formData = new FormData();
       formData.append('file', file);
 
@@ -226,4 +241,3 @@
   </script>
 </body>
 </html>
-
