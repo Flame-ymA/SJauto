@@ -30,14 +30,19 @@
     <div class="max-w-6xl mx-auto h-full px-4 flex items-center justify-between">
       <h1 class="text-xl md:text-2xl font-semibold tracking-wide">SJ Auto · Admin</h1>
       <div class="flex items-center gap-3">
-        <label class="inline-flex items-center gap-3 px-3 py-2 rounded-xl border border-sjgold/30 hover:border-sjgold/60 transition">
-          <input id="excelFile" type="file" class="hidden" />
-          <span class="text-sm">选择 Excel</span>
-        </label>
-        <button onclick="uploadExcel()" class="px-4 py-2 rounded-xl bg-sjgold text-black font-semibold hover:brightness-95 active:brightness-90 shadow-glow transition">
-          上传并加载表格
-        </button>
-      </div>
+  <label class="inline-flex items-center gap-3 px-3 py-2 rounded-xl border border-sjgold/30 hover:border-sjgold/60 transition">
+    <input id="excelFile" type="file" class="hidden" />
+    <span class="text-sm">选择 Excel</span>
+  </label>
+  <button onclick="uploadExcel()" class="px-4 py-2 rounded-xl bg-sjgold text-black font-semibold hover:brightness-95 active:brightness-90 shadow-glow transition">
+    上传并加载表格
+  </button>
+  <!-- ===== 新增按钮：查看卖车图片 ===== -->
+  <button onclick="window.location.href='admin-review.html'" 
+          class="px-4 py-2 rounded-xl border border-sjgold/40 text-sjgold hover:bg-zinc-900 active:bg-zinc-800 transition">
+    查看卖车图片
+  </button>
+</div>
     </div>
   </header>
 
