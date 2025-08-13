@@ -19,7 +19,7 @@
     }
   </script>
   <style>
-    /* 让 header 的高度是确定的，方便 sticky 的 top 偏移 */
+    /* 固定 header 高度，方便 sticky 表头定位 */
     .app-header { height: 64px; }
   </style>
 </head>
@@ -30,19 +30,21 @@
     <div class="max-w-6xl mx-auto h-full px-4 flex items-center justify-between">
       <h1 class="text-xl md:text-2xl font-semibold tracking-wide">SJ Auto · Admin</h1>
       <div class="flex items-center gap-3">
-  <label class="inline-flex items-center gap-3 px-3 py-2 rounded-xl border border-sjgold/30 hover:border-sjgold/60 transition">
-    <input id="excelFile" type="file" class="hidden" />
-    <span class="text-sm">选择 Excel</span>
-  </label>
-  <button onclick="uploadExcel()" class="px-4 py-2 rounded-xl bg-sjgold text-black font-semibold hover:brightness-95 active:brightness-90 shadow-glow transition">
-    上传并加载表格
-  </button>
-  <!-- ===== 新增按钮：查看卖车图片 ===== -->
-  <button onclick="window.location.href='admin-review.html'" 
-          class="px-4 py-2 rounded-xl border border-sjgold/40 text-sjgold hover:bg-zinc-900 active:bg-zinc-800 transition">
-    查看卖车图片
-  </button>
-</div>
+        <!-- 查看卖车图片 -->
+        <button onclick="window.location.href='admin-review.html'"
+                class="px-4 py-2 rounded-xl border border-sjgold/40 text-sjgold hover:bg-zinc-900 active:bg-zinc-800 transition">
+          查看卖车图片
+        </button>
+
+        <!-- 选择并上传 Excel -->
+        <label class="inline-flex items-center gap-3 px-3 py-2 rounded-xl border border-sjgold/30 hover:border-sjgold/60 transition">
+          <input id="excelFile" type="file" class="hidden" />
+          <span class="text-sm">选择 Excel</span>
+        </label>
+        <button onclick="uploadExcel()" class="px-4 py-2 rounded-xl bg-sjgold text-black font-semibold hover:brightness-95 active:brightness-90 shadow-glow transition">
+          上传并加载表格
+        </button>
+      </div>
     </div>
   </header>
 
@@ -71,6 +73,7 @@
             <col style="width:12rem" />   <!-- 操作 -->
           </colgroup>
 
+          <!-- sticky 表头：top 设为 header 的高度 64px -->
           <thead class="bg-zinc-900 sticky z-10 border-b border-sjgold/20" style="top:64px;">
             <tr class="text-left">
               <th class="px-4 py-3 font-semibold">Year</th>
@@ -95,19 +98,18 @@
   </main>
 
   <script>
-    const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
-    const SHEET_NAME = 'Sheet1';
-    const API_KEY = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
+    const BACKEND = 'https://flameauto-write.onrender.com';
     const CLOUDINARY_CLOUD_NAME = 'duwckagtg';
 
-    // 加载表格
+    // 加载表格（从后端 sheet1 读取）
     async function loadSheet() {
       try {
-        const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`);
+        const res = await fetch(`${BACKEND}/sheet1`);
         const data = await res.json();
 
-        if (!data.values) {
-          alert('读取表格失败，可能请求太频繁，请稍后重试。');
+        if (!data.ok) {
+          console.error('Sheet1 读取失败：', data);
+          alert('读取表格失败，稍后重试。');
           return;
         }
 
@@ -115,7 +117,8 @@
         const count = document.getElementById('rowCount');
         tbody.innerHTML = '';
 
-        const rows = data.values; // 跳过表头
+        // data.values 的第 0 行是表头，这里跳过
+        const rows = (data.values || []).slice(1);
         count.textContent = `共 ${rows.length} 条`;
 
         rows.forEach((row) => {
@@ -127,7 +130,7 @@
           displayCols.forEach(colIndex => {
             const td = document.createElement('td');
             td.className = 'px-4 py-3 truncate'; // 超出用省略号
-            td.textContent = row[colIndex] || '';
+            td.textContent = (row[colIndex] ?? '');
             tr.appendChild(td);
           });
 
@@ -160,7 +163,7 @@
       }
     }
 
-    // 上传 Excel
+    // 上传 Excel（后端增量写入）
     async function uploadExcel() {
       const fileInput = document.getElementById('excelFile');
       const file = fileInput.files[0];
@@ -170,16 +173,21 @@
       formData.append('file', file);
 
       try {
-        const res = await fetch('https://flameauto-write.onrender.com/upload', {
+        const res = await fetch(`${BACKEND}/upload`, {
           method: 'POST',
           body: formData
         });
-        await res.json();
+        const data = await res.json();
+        if (!res.ok) {
+          console.error('上传失败：', data);
+          alert('上传失败');
+          return;
+        }
         alert('上传成功');
         loadSheet();
       } catch (err) {
         console.error(err);
-        alert('上传失败');
+        alert('上传失败：' + err.message);
       }
     }
 
@@ -203,7 +211,7 @@
 
           try {
             // 取签名
-            const signRes = await fetch('https://flameauto-write.onrender.com/get-signature', {
+            const signRes = await fetch(`${BACKEND}/get-signature`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ public_id: publicId })
