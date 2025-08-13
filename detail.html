@@ -47,19 +47,28 @@
           />
         </div>
 
-        <!-- 导航按钮 -->
-        <div class="mt-4 flex gap-3">
-          <button
-            class="px-4 py-2 rounded-xl bg-sjgold text-black font-semibold
-                   hover:brightness-95 active:brightness-90 transition
-                   ring-1 ring-sjgold/30 shadow-gold"
-            onclick="prevImage()">⬅️ 上一张</button>
-          <button
-            class="px-4 py-2 rounded-xl bg-sjgold text-black font-semibold
-                   hover:brightness-95 active:brightness-90 transition
-                   ring-1 ring-sjgold/30 shadow-gold"
-            onclick="nextImage()">➡️ 下一张</button>
-        </div>
+      <!-- 导航按钮 -->
+<div class="mt-4 flex gap-4 justify-center">
+  <button
+    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full 
+           bg-gradient-to-b from-yellow-400 to-yellow-500 text-black font-medium text-sm
+           shadow-[0_4px_14px_rgba(255,215,0,0.4)] 
+           hover:shadow-[0_6px_20px_rgba(255,215,0,0.6)] 
+           hover:brightness-105 active:scale-95 transition-all duration-200 ease-in-out"
+    onclick="prevImage()">
+    ⬅️ <span>上一张</span>
+  </button>
+
+  <button
+    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full 
+           bg-gradient-to-b from-yellow-400 to-yellow-500 text-black font-medium text-sm
+           shadow-[0_4px_14px_rgba(255,215,0,0.4)] 
+           hover:shadow-[0_6px_20px_rgba(255,215,0,0.6)] 
+           hover:brightness-105 active:scale-95 transition-all duration-200 ease-in-out"
+    onclick="nextImage()">
+    <span>下一张</span> ➡️
+  </button>
+</div>
 
         <!-- 缩略图（可选） -->
         <div id="thumbs" class="mt-5 grid grid-cols-6 gap-2 w-full md:w-[720px]"></div>
