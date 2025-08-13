@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SJ Auto 优质车源</title>
-  <!-- Tailwind（开发/预览用；生产建议改本地构建） -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -33,16 +32,13 @@
 
   <main class="max-w-7xl mx-auto px-4 py-6 md:py-10">
     <h1 class="text-2xl md:text-3xl font-bold tracking-wide mb-6">在售车源</h1>
-
-    <!-- 车卡列表 -->
-    <div id="car-list"
-         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+    <div id="car-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
       <!-- JS 动态填充 -->
     </div>
   </main>
 
   <script>
-    const BACKEND = 'https://flameauto-write.onrender.com';  // 统一走后端
+    const BACKEND = 'https://flameauto-write.onrender.com';
     const CLOUD   = 'duwckagtg';
 
     const fmtPrice   = v => v ? String(v).replace(/(\d)(?=(\d{3})+$)/g, '$1,') : '';
@@ -72,21 +68,22 @@
           const status = (row[statusIdx] || '').toLowerCase();
           if (status === 'sold' || status === 'deleted') return;
 
-          const vin    = row[vinIdx] || '';
-          const year   = row[yearIdx] || '';
-          const make   = row[makeIdx] || '';
-          const model  = row[modelIdx] || '';
-          const color  = row[colorIdx] || '';
-          const price  = row[priceIdx] || '';
-          const mileage= row[mileageIdx] || '';
+          const vin     = row[vinIdx] || '';
+          const year    = row[yearIdx] || '';
+          const make    = row[makeIdx] || '';
+          const model   = row[modelIdx] || '';
+          const color   = row[colorIdx] || '';
+          const price   = row[priceIdx] || '';
+          const mileage = row[mileageIdx] || '';
 
+          // 卡片
           const card = document.createElement('article');
           card.className = `
             group bg-neutral-950/70 rounded-2xl ring-1 ring-sjgold/15 shadow-gold
-            overflow-hidden flex flex-col hover:ring-sjgold/30 transition min-w-[240px]
+            overflow-hidden flex flex-col hover:ring-sjgold/30 transition
           `;
 
-          // 图
+          // 顶部图片
           const imgWrap = document.createElement('div');
           imgWrap.className = 'w-full h-44 sm:h-48 md:h-52 bg-neutral-900 overflow-hidden';
           const img = document.createElement('img');
@@ -98,50 +95,44 @@
           };
           imgWrap.appendChild(img);
 
-          // 信息区：左右两列
-          const info = document.createElement('div');
-          info.className = 'p-4 flex flex-row gap-3 items-stretch';
+          // 信息区（相对定位，给右下角按钮预留空间）
+          const bodyBox = document.createElement('div');
+          bodyBox.className = 'relative p-4 pb-16'; // pb-16 预留按钮高度
 
-          // 左：文案
-          const left = document.createElement('div');
-          left.className = 'flex-1 min-w-0';
+          // 标题允许换行，确保不被截断
           const title = document.createElement('h3');
-          title.className = 'text-base font-semibold mb-1 line-clamp-1';
+          title.className = 'text-base md:text-lg font-semibold leading-snug';
           title.textContent = `${year} ${make} ${model}`.trim();
 
+          // 价格
           const priceEl = document.createElement('div');
-          priceEl.className = 'text-lg font-bold text-sjgold/95';
+          priceEl.className = 'mt-1 text-lg md:text-xl font-bold text-sjgold/95';
           priceEl.textContent = price ? `CAD $${fmtPrice(price)}` : '价格面议';
 
+          // 颜色/里程
           const meta = document.createElement('div');
-          meta.className = 'mt-1 text-sm text-sjgold/80 space-y-1';
-          meta.innerHTML = `
-            ${color ? `<p class="truncate">颜色：${color}</p>` : ''}
-            ${mileage ? `<p class="truncate">里程：${fmtMileage(mileage)}</p>` : ''}
-          `;
+          meta.className = 'mt-2 text-sm text-sjgold/80 space-y-1';
+          if (color)   meta.insertAdjacentHTML('beforeend', `<p>颜色：${color}</p>`);
+          if (mileage) meta.insertAdjacentHTML('beforeend', `<p>里程：${fmtMileage(mileage)}</p>`);
 
-          left.appendChild(title);
-          left.appendChild(priceEl);
-          left.appendChild(meta);
-
-          // 右：按钮（强制单行）
-          const right = document.createElement('div');
-          right.className = 'flex items-start';
+          // 右下角按钮（绝对定位）
           const btn = document.createElement('button');
           btn.className = `
-            inline-flex items-center justify-center h-10 px-4 rounded-xl
-            bg-sjgold text-black font-semibold text-sm whitespace-nowrap
-            hover:brightness-95 active:brightness-90 ring-1 ring-sjgold/30 transition
+            absolute right-4 bottom-4 inline-flex items-center justify-center
+            h-10 px-4 rounded-xl bg-sjgold text-black font-semibold text-sm
+            whitespace-nowrap hover:brightness-95 active:brightness-90
+            ring-1 ring-sjgold/30 transition
           `;
           btn.textContent = '查看详细';
           btn.onclick = () => window.location.href = `detail.html?vin=${encodeURIComponent(vin)}`;
-          right.appendChild(btn);
 
-          info.appendChild(left);
-          info.appendChild(right);
+          bodyBox.appendChild(title);
+          bodyBox.appendChild(priceEl);
+          bodyBox.appendChild(meta);
+          bodyBox.appendChild(btn);
 
           card.appendChild(imgWrap);
-          card.appendChild(info);
+          card.appendChild(bodyBox);
           container.appendChild(card);
         });
       } catch (err) {
