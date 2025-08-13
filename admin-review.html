@@ -68,6 +68,7 @@
   </main>
 
   <script>
+    const BACKEND = 'https://flameauto-write.onrender.com'; // ← 你的后端
     const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
     const API_KEY = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
     const SHEET_NAME = 'Sheet2'; // ← 从 Sheet2 拉数据
@@ -94,7 +95,7 @@
       }
 
       const headers = data.values[0].map(v => String(v || '').trim());
-      // 需要的列
+      // 需要的列索引
       const vinIdx     = headers.indexOf('VIN');
       const milIdx     = headers.indexOf('Mileage');
       const accIdx     = headers.indexOf('Accident');
@@ -103,13 +104,22 @@
       const cfgIdx     = headers.indexOf('ConfigURLs');
       const timeIdx    = headers.indexOf('CreatedAt');
 
-      // 容错：如果用户表头拼写不同，给点提示
       if (vinIdx === -1 || milIdx === -1 || accIdx === -1) {
         cardsEl.innerHTML = '<div class="text-sm text-red-400">Sheet2 表头缺少必需字段（VIN / Mileage / Accident）。</div>';
         return;
       }
 
-      allRows = data.values.slice(1); // 去掉表头
+      // 存成统一结构，渲染时使用
+      allRows = data.values.slice(1).map(row => ({
+        vin: String(row[vinIdx] || '').toUpperCase(),
+        mileage: String(row[milIdx] || ''),
+        accident: String(row[accIdx] || ''),
+        exColor: String(row[exColIdx] || ''),
+        inColor: String(row[inColIdx] || ''),
+        cfg: String(row[cfgIdx] || ''),
+        createdAt: String(row[timeIdx] || '')
+      }));
+
       render();
     }
 
@@ -121,21 +131,11 @@
       cardsEl.innerHTML = '';
       let count = 0;
 
-      // 使用表头索引（重新取一遍，确保 render 时可用）
-      const headers = ['VIN','Mileage','Accident','Exterior Color','Interior Color','ConfigURLs','CreatedAt'];
-      const vinIdx = 0, milIdx = 1, accIdx = 2, exColIdx = 3, inColIdx = 4, cfgIdx = 5, timeIdx = 6;
-
-      allRows.forEach(row => {
-        const VIN = String(row[vinIdx] || '').toUpperCase();
-        const mileage = String(row[milIdx] || '');
-        const accident = String(row[accIdx] || '');
-        const exColor = String(row[exColIdx] || '');
-        const inColor = String(row[inColIdx] || '');
-        const cfg = String(row[cfgIdx] || '');
-        const createdAt = String(row[timeIdx] || '');
+      allRows.forEach(item => {
+        const { vin, mileage, accident, exColor, inColor, cfg, createdAt } = item;
 
         // 筛选
-        if (qVin && !VIN.includes(qVin)) return;
+        if (qVin && !vin.includes(qVin)) return;
         if (qAcc && accident !== qAcc) return;
         if (qColor) {
           const mix = (exColor + ' ' + inColor).toLowerCase();
@@ -148,13 +148,13 @@
           .filter(u => u && /^https?:\/\//i.test(u));
 
         const card = document.createElement('article');
-        card.className = 'rounded-2xl border border-sjgold/30 bg-zinc-950/60 shadow-glow p-4 flex flex-col gap-3';
+        card.className = 'relative rounded-2xl border border-sjgold/30 bg-zinc-950/60 shadow-glow p-4 flex flex-col gap-3';
 
         card.innerHTML = `
           <div class="flex items-start justify-between gap-3">
             <div>
               <div class="text-xs text-neutral-400">VIN</div>
-              <div class="font-mono tracking-wider text-sjgold">${VIN || '-'}</div>
+              <div class="font-mono tracking-wider text-sjgold">${vin || '-'}</div>
             </div>
             <div class="text-right text-xs text-neutral-400">${createdAt ? new Date(createdAt).toLocaleString() : ''}</div>
           </div>
@@ -176,6 +176,14 @@
               `).join('')}
             </div>
           </div>
+
+          <!-- 右下角操作区 -->
+          <div class="mt-3 flex justify-end">
+            <button class="px-3 py-1.5 rounded-lg bg-sjgold text-black text-sm font-semibold hover:brightness-95 active:brightness-90"
+                    onclick="viewVinImages('${vin}')">
+              查看图片
+            </button>
+          </div>
         `;
 
         cardsEl.appendChild(card);
@@ -186,6 +194,24 @@
         emptyTip.classList.remove('hidden');
       } else {
         emptyTip.classList.add('hidden');
+      }
+    }
+
+    // 点击查看图片：检查 Cloudinary 是否有该 VIN 的图片，有则跳转到 view-images.html
+    async function viewVinImages(vin) {
+      try {
+        const res = await fetch(`${BACKEND}/cloudinary-search?vin=${encodeURIComponent(vin)}`);
+        const data = await res.json();
+        const hasAny = Array.isArray(data.resources) && data.resources.length > 0;
+        if (!hasAny) {
+          alert('未找到该 VIN 的车辆图片');
+          return;
+        }
+        // 打开图片查看页（你已有的页面，用 VIN 自行拉取 Cloudinary 图）
+        window.open(`view-images.html?vin=${encodeURIComponent(vin)}`, '_blank');
+      } catch (e) {
+        console.error(e);
+        alert('加载图片失败，请稍后再试');
       }
     }
 
