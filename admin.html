@@ -110,7 +110,7 @@
         const count = document.getElementById('rowCount');
         tbody.innerHTML = '';
 
-        const rows = data.values.slice(1); // 跳过表头
+        const rows = data.values; // 跳过表头
         count.textContent = `共 ${rows.length} 条`;
 
         rows.forEach((row) => {
