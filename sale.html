@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -64,6 +63,22 @@
         </select>
       </div>
 
+      <!-- 颜色（新增） -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="exterior_color" class="block text-sm mb-1">外部颜色</label>
+          <input id="exterior_color" name="exterior_color" type="text"
+                 placeholder="例如：黑色 / 冰川白 / 哑光灰"
+                 class="w-full rounded-lg bg-black/60 border sj-border-gold px-3 py-2 outline-none focus:ring-2 focus:ring-yellow-500" />
+        </div>
+        <div>
+          <label for="interior_color" class="block text-sm mb-1">内部颜色</label>
+          <input id="interior_color" name="interior_color" type="text"
+                 placeholder="例如：红黑拼色 / 棕色 / 米白"
+                 class="w-full rounded-lg bg-black/60 border sj-border-gold px-3 py-2 outline-none focus:ring-2 focus:ring-yellow-500" />
+        </div>
+      </div>
+
       <!-- 配置单照片上传（可多选） -->
       <div>
         <label class="block text-sm mb-2">配置单明细（可选，支持多张）</label>
@@ -126,7 +141,7 @@
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const publicId = `${vin}/config_${i+1}_${Date.now()}`; // 与你现有约定一致：vin 作为“文件夹”
+        const publicId = `${vin}/config_${i+1}_${Date.now()}`; // vin 作为“文件夹”
         try {
           // 1) 向后端要签名
           const signRes = await fetch(`${BACKEND}/get-signature`, {
@@ -204,6 +219,8 @@
       const vin = vinInput.value.trim().toUpperCase();
       const mileage = document.getElementById('mileage').value.trim();
       const accident = document.getElementById('accident').value;
+      const exterior_color = document.getElementById('exterior_color').value.trim();
+      const interior_color = document.getElementById('interior_color').value.trim();
 
       if (!vin || !mileage || !accident) {
         return toast('请完整填写必填项：VIN / 里程 / 事故情况。', 'warn');
@@ -213,12 +230,16 @@
       formMsg.textContent = '正在提交…';
 
       try {
-        // POST 给后端 /sell（你在服务端写入 Sheet2 并处理邮件）
+        // POST 给后端 /sell（服务端写入 Sheet2）
         const res = await fetch(`${BACKEND}/sell`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            vin, mileage, accident,
+            vin,
+            mileage,
+            accident,
+            exterior_color,
+            interior_color,
             config_urls: uploadedUrls   // 可为空数组
           })
         });
