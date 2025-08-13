@@ -32,14 +32,15 @@
     <h1 class="text-2xl md:text-3xl font-bold sj-gold tracking-wide">卖车信息登记</h1>
     <p class="mt-2 text-sm text-neutral-400">请按顺序填写车辆信息并（可选）上传配置单照片。提交后我们会尽快联系您。</p>
 
-    <form id="sellForm" class="mt-8 space-y-6 bg-neutral-900/60 border rounded-xl sj-border-gold p-5">
+    <form id="sellForm" class="mt-8 space-y-6 bg-neutral-900/60 border rounded-xl sj-border-gold p-5" novalidate>
       <!-- VIN -->
       <div>
         <label for="vin" class="block text-sm mb-1">VIN（车辆识别号）<span class="sj-gold">*</span></label>
         <input id="vin" name="vin" type="text" required
                placeholder="例如：1HGCM82633A004352"
+               autocomplete="off"
                class="w-full rounded-lg bg-black/60 border sj-border-gold px-3 py-2 outline-none focus:ring-2 focus:ring-yellow-500 uppercase" />
-        <p class="mt-1 text-xs text-neutral-400">请填写 17 位 VIN（系统将自动转为大写）。</p>
+        <p class="mt-1 text-xs text-neutral-400">请输入 17 位 VIN（不含 I / O / Q，系统自动大写）。</p>
       </div>
 
       <!-- 里程 -->
@@ -63,7 +64,7 @@
         </select>
       </div>
 
-      <!-- 颜色（新增） -->
+      <!-- 颜色 -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label for="exterior_color" class="block text-sm mb-1">外部颜色</label>
@@ -82,34 +83,35 @@
       <!-- 配置单照片上传（可多选） -->
       <div>
         <label class="block text-sm mb-2">配置单明细（可选，支持多张）</label>
-       <div class="flex items-center gap-3 flex-wrap">
-  <input id="configImages" type="file" accept="image/*" multiple
-         class="block w-full sm:w-auto text-sm text-neutral-300
-                file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0
-                file:text-sm file:font-semibold file:bg-yellow-500 file:text-black
-                hover:file:bg-yellow-400" />
-  <!-- 这里放上面的按钮 -->
-         <button
-  type="button"
-  id="btnUpload"
-  class="inline-flex items-center justify-center gap-2 
-         px-5 h-10 rounded-full
-         bg-gradient-to-b from-yellow-400 to-yellow-500 text-black
-         font-medium text-[14px] leading-none
-         whitespace-nowrap break-keep
-         shadow-[0_4px_14px_rgba(255,215,0,0.35)]
-         hover:shadow-[0_6px_20px_rgba(255,215,0,0.55)]
-         hover:brightness-105 active:scale-95 transition-all">
-  <!-- 小图标（可删） -->
-  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M12 16a1 1 0 0 1-1-1V8.41l-2.3 2.3a1 1 0 1 1-1.4-1.42l4-4a1 1 0 0 1 1.4 0l4 4a1 1 0 1 1-1.4 1.42L13 8.4V15a1 1 0 0 1-1 1Z"/>
-    <path d="M5 18a3 3 0 0 1-1-5.83 5 5 0 0 1 9.58-2.14A4 4 0 1 1 17 18H5Z"/>
-  </svg>
-  上传图片
-</button>
-</div>
-        
-        <p class="mt-1 text-xs text-neutral-400">先选择文件，再点“上传图片”。如未上传，也可直接提交表单。</p>
+        <div class="flex items-center gap-3 flex-wrap">
+          <input id="configImages" type="file"
+                 accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                 multiple
+                 class="block w-full sm:w-auto text-sm text-neutral-300
+                        file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0
+                        file:text-sm file:font-semibold file:bg-yellow-500 file:text-black
+                        hover:file:bg-yellow-400" />
+
+          <button
+            type="button" id="btnUpload"
+            class="inline-flex items-center justify-center gap-2 
+                   px-5 h-10 rounded-full
+                   bg-gradient-to-b from-yellow-400 to-yellow-500 text-black
+                   font-medium text-[14px] leading-none
+                   whitespace-nowrap break-keep
+                   shadow-[0_4px_14px_rgba(255,215,0,0.35)]
+                   hover:shadow-[0_6px_20px_rgba(255,215,0,0.55)]
+                   hover:brightness-105 active:scale-95 transition-all">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 16a1 1 0 0 1-1-1V8.41l-2.3 2.3a1 1 0 1 1-1.4-1.42l4-4a1 1 0 0 1 1.4 0l4 4a1 1 0 1 1-1.4 1.42L13 8.4V15a1 1 0 0 1-1 1Z"/>
+              <path d="M5 18a3 3 0 0 1-1-5.83 5 5 0 0 1 9.58-2.14A4 4 0 1 1 17 18H5Z"/>
+            </svg>
+            上传图片
+          </button>
+        </div>
+        <p class="mt-1 text-xs text-neutral-400">
+          单张 ≤ 10MB，最多 12 张。先选择文件，再点“上传图片”。如未上传，也可直接提交表单。
+        </p>
 
         <!-- 上传进度 & 预览 -->
         <div id="uploadStatus" class="mt-3 hidden text-sm"></div>
@@ -133,45 +135,86 @@
     const BACKEND = 'https://flameauto-write.onrender.com';
     const CLOUDINARY_CLOUD_NAME = 'duwckagtg';
 
-    // === 状态变量 ===
-    let uploadedUrls = []; // 存储配置单图片的 Cloudinary URL
+    // 限制
+    const MAX_FILES = 12;
+    const MAX_SIZE_MB = 10;
+    const ALLOWED_TYPES = ['image/jpeg','image/png','image/webp','image/heic','image/heif'];
 
-    // VIN 自动大写
+    // === 状态变量 ===
+    let uploadedUrls = []; // 已上传到 Cloudinary 的 URL
+
+    // VIN 自动大写 & 基础校验
     const vinInput = document.getElementById('vin');
     vinInput.addEventListener('input', () => vinInput.value = vinInput.value.toUpperCase());
+    function validateVIN(v) {
+      const vin = String(v || '').toUpperCase().trim();
+      // 17 位，A-HJ-NPR-Z 和 数字，排除 I/O/Q
+      return /^[A-HJ-NPR-Z0-9]{17}$/.test(vin);
+    }
+
+    // Toast/状态
+    function setStatus(msg, type='info') {
+      const box = document.getElementById('uploadStatus');
+      box.classList.remove('hidden');
+      const colors = {
+        info: 'text-neutral-300',
+        ok: 'text-green-400',
+        warn: 'text-yellow-400',
+        error: 'text-red-400'
+      };
+      box.className = 'mt-3 text-sm ' + (colors[type] || colors.info);
+      box.textContent = msg;
+    }
+    function toast(msg, type='info') { setStatus(msg, type); }
+
+    function addThumb(url) {
+      const thumbs = document.getElementById('thumbs');
+      const div = document.createElement('div');
+      div.className = 'relative rounded-lg overflow-hidden ring-1 ring-white/10';
+      div.innerHTML = `<img src="${url}" class="w-full h-32 object-cover" />`;
+      thumbs.appendChild(div);
+    }
 
     // 上传按钮
-    document.getElementById('btnUpload').addEventListener('click', handleUpload);
+    const btnUpload = document.getElementById('btnUpload');
+    btnUpload.addEventListener('click', handleUpload);
 
     async function handleUpload() {
-      const files = document.getElementById('configImages').files;
+      const fileInput = document.getElementById('configImages');
+      const files = Array.from(fileInput.files || []);
       const vin = vinInput.value.trim().toUpperCase();
 
-      if (!files.length) {
-        return toast('请先选择要上传的图片。', 'warn');
-      }
-      if (!vin) {
-        return toast('请先填写 VIN 再上传图片。', 'warn');
+      if (!validateVIN(vin)) return toast('VIN 不合法，请检查（17 位且不含 I/O/Q）', 'warn');
+      if (!files.length)   return toast('请先选择要上传的图片。', 'warn');
+      if (files.length > MAX_FILES) return toast(`最多选择 ${MAX_FILES} 张图片。`, 'warn');
+
+      // 类型/大小校验
+      for (const f of files) {
+        if (!ALLOWED_TYPES.includes(f.type)) return toast('仅支持 JPG/PNG/WEBP/HEIC/HEIF。', 'warn');
+        if (f.size > MAX_SIZE_MB * 1024 * 1024) return toast(`单张不得超过 ${MAX_SIZE_MB}MB。`, 'warn');
       }
 
-      uploadedUrls = []; // 重置
+      // UI
+      uploadedUrls = [];
       setStatus('正在上传，请稍候…', 'info');
-      const thumbs = document.getElementById('thumbs');
-      thumbs.innerHTML = '';
+      document.getElementById('thumbs').innerHTML = '';
+      btnUpload.disabled = true;
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const publicId = `${vin}/config_${i+1}_${Date.now()}`; // vin 作为“文件夹”
-        try {
-          // 1) 向后端要签名
+      try {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const publicId = `${vin}/config_${i+1}_${Date.now()}`;
+
+          // 1) 请求签名
           const signRes = await fetch(`${BACKEND}/get-signature`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ public_id: publicId })
           });
+          if (!signRes.ok) throw new Error('签名失败');
           const { signature, timestamp, apiKey } = await signRes.json();
 
-          // 2) 调 Cloudinary 上传
+          // 2) 直传 Cloudinary
           const formData = new FormData();
           formData.append('file', file);
           formData.append('api_key', apiKey);
@@ -192,42 +235,19 @@
             console.error('上传失败：', data);
             toast('有图片上传失败，请重试。', 'error');
           }
-        } catch (e) {
-          console.error(e);
-          toast('上传异常，请重试。', 'error');
         }
+
+        if (uploadedUrls.length) {
+          setStatus(`上传完成，共 ${uploadedUrls.length} 张。`, 'ok');
+        } else {
+          setStatus('未成功上传任何图片。', 'warn');
+        }
+      } catch (e) {
+        console.error(e);
+        toast('上传异常，请稍后重试。', 'error');
+      } finally {
+        btnUpload.disabled = false;
       }
-
-      if (uploadedUrls.length) {
-        setStatus(`上传完成，共 ${uploadedUrls.length} 张。`, 'ok');
-      } else {
-        setStatus('未成功上传任何图片。', 'warn');
-      }
-    }
-
-    function addThumb(url) {
-      const thumbs = document.getElementById('thumbs');
-      const div = document.createElement('div');
-      div.className = 'relative rounded-lg overflow-hidden ring-1 ring-white/10';
-      div.innerHTML = `<img src="${url}" class="w-full h-32 object-cover" />`;
-      thumbs.appendChild(div);
-    }
-
-    function setStatus(msg, type='info') {
-      const box = document.getElementById('uploadStatus');
-      box.classList.remove('hidden');
-      const colors = {
-        info: 'text-neutral-300',
-        ok: 'text-green-400',
-        warn: 'text-yellow-400',
-        error: 'text-red-400'
-      };
-      box.className = 'mt-3 text-sm ' + (colors[type] || colors.info);
-      box.textContent = msg;
-    }
-
-    function toast(msg, type='info') {
-      setStatus(msg, type);
     }
 
     // 表单提交
@@ -242,24 +262,24 @@
       const exterior_color = document.getElementById('exterior_color').value.trim();
       const interior_color = document.getElementById('interior_color').value.trim();
 
-      if (!vin || !mileage || !accident) {
-        return toast('请完整填写必填项：VIN / 里程 / 事故情况。', 'warn');
+      if (!validateVIN(vin)) {
+        toast('VIN 不合法，请检查（17 位且不含 I/O/Q）', 'warn');
+        return;
+      }
+      if (!mileage || !accident) {
+        toast('请完整填写必填项：里程 / 事故情况。', 'warn');
+        return;
       }
 
       submitBtn.disabled = true;
       formMsg.textContent = '正在提交…';
 
       try {
-        // POST 给后端 /sell（服务端写入 Sheet2）
         const res = await fetch(`${BACKEND}/sell`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            vin,
-            mileage,
-            accident,
-            exterior_color,
-            interior_color,
+            vin, mileage, accident, exterior_color, interior_color,
             config_urls: uploadedUrls   // 可为空数组
           })
         });
@@ -267,8 +287,11 @@
         if (!res.ok) throw new Error('提交失败');
         toast('提交成功，我们会尽快联系您！', 'ok');
         formMsg.textContent = '提交成功。';
-        (e.target).reset();
+
+        // 清空表单与缩略图/文件
+        e.target.reset();
         document.getElementById('thumbs').innerHTML = '';
+        document.getElementById('configImages').value = '';
         uploadedUrls = [];
       } catch (err) {
         console.error(err);
