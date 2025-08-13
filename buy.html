@@ -12,7 +12,7 @@
         extend: {
           colors: { sjgold: '#FFD700' },
           boxShadow: {
-            'gold': '0 10px 25px -5px rgba(255,215,0,0.15), 0 8px 10px -6px rgba(255,215,0,0.08)'
+            gold: '0 10px 25px -5px rgba(255,215,0,0.15), 0 8px 10px -6px rgba(255,215,0,0.08)'
           }
         }
       }
@@ -26,7 +26,6 @@
       <div class="flex items-center gap-6 text-sm">
         <a href="index.html" class="opacity-80 hover:opacity-100">返回首页</a>
         <a href="sale.html" class="opacity-60 hover:opacity-100">卖车</a>
-        <a href="#" class="opacity-60 hover:opacity-100">租车</a>
       </div>
       <div class="text-xs opacity-70">SJ Auto — 优质车源</div>
     </nav>
@@ -40,127 +39,22 @@
          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
       <!-- JS 动态填充 -->
     </div>
-
-    <!-- 加载失败兜底 -->
-    <div id="errorTip" class="hidden col-span-full text-center py-12 opacity-80">车源加载失败，请稍后重试。</div>
   </main>
 
   <script>
-    const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
-    const API_KEY  = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
-    const CLOUD    = 'duwckagtg';
+    const BACKEND = 'https://flameauto-write.onrender.com';  // 统一走后端
+    const CLOUD   = 'duwckagtg';
 
-    // 简单格式化：价格/里程
     const fmtPrice   = v => v ? String(v).replace(/(\d)(?=(\d{3})+$)/g, '$1,') : '';
     const fmtMileage = v => v ? `${v} km` : '';
 
-    // 占位图
-    const FALLBACK = 'https://placehold.co/800x600/111111/FFD700?text=No+Image';
-
-    // 依次尝试多种 Cloudinary 路径，提升主图命中率
-    function buildImageCandidates(vin) {
-      return [
-        `https://res.cloudinary.com/${CLOUD}/image/upload/${vin}/${vin}main`,     // 无后缀，走 Cloudinary 自动格式
-        `https://res.cloudinary.com/${CLOUD}/image/upload/${vin}/${vin}main.jpg`,
-        `https://res.cloudinary.com/${CLOUD}/image/upload/${vin}/${vin}main.png`,
-        `https://res.cloudinary.com/${CLOUD}/image/upload/${vin}/${vin}1.jpg`,
-      ];
-    }
-
-    // 懒加载工具：进入可视区时真正加载图片
-    const io = ('IntersectionObserver' in window)
-      ? new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              const img = entry.target;
-              const candidates = img.dataset.candidates ? img.dataset.candidates.split('|') : [];
-              tryLoadImage(img, candidates);
-              io.unobserve(img);
-            }
-          });
-        }, { rootMargin: '200px' })
-      : null;
-
-    function tryLoadImage(img, candidates) {
-      if (!candidates || candidates.length === 0) {
-        img.src = FALLBACK;
-        return;
-      }
-      const url = candidates.shift();
-      // 临时 Image 对象测试加载是否成功
-      const probe = new Image();
-      probe.onload = () => { img.src = url; };
-      probe.onerror = () => { tryLoadImage(img, candidates); };
-      probe.src = url;
-    }
-
-    function createCarCard(record) {
-      const { vin, year, make, model, color, price, mile } = record;
-
-      const card = document.createElement('article');
-      card.className = `
-        group bg-neutral-950/70 rounded-2xl ring-1 ring-sjgold/15 shadow-gold
-        overflow-hidden flex flex-col hover:ring-sjgold/30 transition
-      `;
-
-      // 图：固定高度，object-cover
-      const imgWrap = document.createElement('div');
-      imgWrap.className = 'w-full h-48 sm:h-52 md:h-56 bg-neutral-900 overflow-hidden';
-      const img = document.createElement('img');
-      img.className = 'w-full h-full object-cover group-hover:scale-[1.02] transition';
-      img.alt = `${make} ${model}`;
-      img.src = FALLBACK; // 先占位
-      img.loading = 'lazy';
-      img.decoding = 'async';
-      img.dataset.candidates = buildImageCandidates(vin).join('|');
-      imgWrap.appendChild(img);
-      if (io) io.observe(img); else tryLoadImage(img, img.dataset.candidates.split('|'));
-
-      // 文字
-      const body = document.createElement('div');
-      body.className = 'p-4 flex-1 flex flex-direction-col';
-
-      const title = document.createElement('h3');
-      title.className = 'text-base md:text-lg font-semibold mb-1 line-clamp-1';
-      title.textContent = `${year || ''} ${make || ''} ${model || ''}`.trim();
-
-      const priceEl = document.createElement('div');
-      priceEl.className = 'text-lg md:text-xl font-bold text-sjgold/95 mt-1';
-      priceEl.textContent = price ? `CAD $${fmtPrice(price)}` : '价格面议';
-
-      const meta = document.createElement('div');
-      meta.className = 'mt-2 text-sm space-y-1 text-sjgold/80';
-      const metaLines = [
-        color ? `颜色：${color}` : '',
-        mile  ? `里程：${fmtMileage(mile)}` : ''
-      ].filter(Boolean);
-      meta.innerHTML = metaLines.map(t => `<p>${t}</p>`).join('');
-
-      const btn = document.createElement('button');
-      btn.className = `
-        mt-4 inline-flex items-center justify-center px-3 py-2 rounded-xl
-        bg-sjgold text-black font-semibold hover:brightness-95 active:brightness-90
-        ring-1 ring-sjgold/30 shadow-gold transition
-      `;
-      btn.textContent = '查看详细';
-      btn.onclick = () => window.location.href = `detail.html?vin=${encodeURIComponent(vin)}`;
-
-      body.appendChild(title);
-      body.appendChild(priceEl);
-      body.appendChild(meta);
-      body.appendChild(btn);
-
-      card.appendChild(imgWrap);
-      card.appendChild(body);
-      return card;
-    }
-
     async function loadCars() {
       try {
-        const res  = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1?key=${API_KEY}`);
-        const data = await res.json();
-        const rows    = data.values || [];
+        const res = await fetch(`${BACKEND}/sheet1`);
+        const json = await res.json();
+        const rows    = json.values || [];
         const headers = rows[0] || [];
+        const body    = rows.slice(1);
 
         const vinIdx     = headers.indexOf('VIN');
         const statusIdx  = headers.indexOf('Status');
@@ -172,30 +66,91 @@
         const priceIdx   = headers.indexOf('Price');
 
         const container = document.getElementById('car-list');
+        container.innerHTML = '';
 
-        rows.slice(1).forEach(row => {
-          const status = String(row[statusIdx] || '').toLowerCase();
+        body.forEach(row => {
+          const status = (row[statusIdx] || '').toLowerCase();
           if (status === 'sold' || status === 'deleted') return;
 
-          const record = {
-            vin:   row[vinIdx],
-            year:  row[yearIdx]   || '',
-            make:  row[makeIdx]   || '',
-            model: row[modelIdx]  || '',
-            color: row[colorIdx]  || '',
-            price: row[priceIdx]  || '',
-            mile:  row[mileageIdx]|| ''
+          const vin    = row[vinIdx] || '';
+          const year   = row[yearIdx] || '';
+          const make   = row[makeIdx] || '';
+          const model  = row[modelIdx] || '';
+          const color  = row[colorIdx] || '';
+          const price  = row[priceIdx] || '';
+          const mileage= row[mileageIdx] || '';
+
+          const card = document.createElement('article');
+          card.className = `
+            group bg-neutral-950/70 rounded-2xl ring-1 ring-sjgold/15 shadow-gold
+            overflow-hidden flex flex-col hover:ring-sjgold/30 transition min-w-[240px]
+          `;
+
+          // 图
+          const imgWrap = document.createElement('div');
+          imgWrap.className = 'w-full h-44 sm:h-48 md:h-52 bg-neutral-900 overflow-hidden';
+          const img = document.createElement('img');
+          img.className = 'w-full h-full object-cover group-hover:scale-[1.02] transition';
+          img.alt = `${make} ${model}`;
+          img.src = `https://res.cloudinary.com/${CLOUD}/image/upload/${vin}/${vin}main.jpg`;
+          img.onerror = () => {
+            img.src = 'https://placehold.co/800x600/111111/FFD700?text=No+Image';
           };
+          imgWrap.appendChild(img);
 
-          // 没 VIN 的数据不渲染
-          if (!record.vin) return;
+          // 信息区：左右两列
+          const info = document.createElement('div');
+          info.className = 'p-4 flex flex-row gap-3 items-stretch';
 
-          container.appendChild(createCarCard(record));
+          // 左：文案
+          const left = document.createElement('div');
+          left.className = 'flex-1 min-w-0';
+          const title = document.createElement('h3');
+          title.className = 'text-base font-semibold mb-1 line-clamp-1';
+          title.textContent = `${year} ${make} ${model}`.trim();
+
+          const priceEl = document.createElement('div');
+          priceEl.className = 'text-lg font-bold text-sjgold/95';
+          priceEl.textContent = price ? `CAD $${fmtPrice(price)}` : '价格面议';
+
+          const meta = document.createElement('div');
+          meta.className = 'mt-1 text-sm text-sjgold/80 space-y-1';
+          meta.innerHTML = `
+            ${color ? `<p class="truncate">颜色：${color}</p>` : ''}
+            ${mileage ? `<p class="truncate">里程：${fmtMileage(mileage)}</p>` : ''}
+          `;
+
+          left.appendChild(title);
+          left.appendChild(priceEl);
+          left.appendChild(meta);
+
+          // 右：按钮（强制单行）
+          const right = document.createElement('div');
+          right.className = 'flex items-start';
+          const btn = document.createElement('button');
+          btn.className = `
+            inline-flex items-center justify-center h-10 px-4 rounded-xl
+            bg-sjgold text-black font-semibold text-sm whitespace-nowrap
+            hover:brightness-95 active:brightness-90 ring-1 ring-sjgold/30 transition
+          `;
+          btn.textContent = '查看详细';
+          btn.onclick = () => window.location.href = `detail.html?vin=${encodeURIComponent(vin)}`;
+          right.appendChild(btn);
+
+          info.appendChild(left);
+          info.appendChild(right);
+
+          card.appendChild(imgWrap);
+          card.appendChild(info);
+          container.appendChild(card);
         });
-
       } catch (err) {
         console.error('加载表格失败:', err);
-        document.getElementById('errorTip').classList.remove('hidden');
+        const container = document.getElementById('car-list');
+        const tip = document.createElement('div');
+        tip.className = 'col-span-full text-center py-12 opacity-80';
+        tip.textContent = '车源加载失败，请稍后重试。';
+        container.appendChild(tip);
       }
     }
 
