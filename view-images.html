@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>SJ Auto · 车辆图片</title>
+  <!-- Tailwind（预览/开发用） -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { sjgold: '#FFD700' },
+          boxShadow: {
+            glow: '0 0 0 1px rgba(255,215,0,0.25), 0 10px 25px -5px rgba(0,0,0,0.5)'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root { --sj: #FFD700; }
+    .sj-gold { color: var(--sj); }
+    /* 固定图片尺寸容器：不随屏幕变化 */
+    .img-box {
+      width: 960px;   /* 固定宽度 */
+      height: 540px;  /* 固定高度（16:9）*/
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid rgba(255,215,0,.35);
+      background: #0a0a0a;
+    }
+    .img-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;   /* 填满并裁切，保持冲击力 */
+      image-rendering: auto;
+    }
+
+    /* 让整页居中展示固定尺寸图片 */
+    .page-width {
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-black text-neutral-200">
+  <!-- 顶部 -->
+  <header class="sticky top-0 z-10 bg-black/70 backdrop-blur border-b border-sjgold/30">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="admin-review.html" class="text-sm px-3 py-1 rounded hover:bg-white/5">&larr; 返回审核</a>
+      <div id="title" class="text-base md:text-lg font-semibold sj-gold">车辆图片</div>
+      <a href="index.html" class="text-sm px-3 py-1 rounded hover:bg-white/5">首页</a>
+    </div>
+  </header>
+
+  <!-- 主体 -->
+  <main class="page-width mx-auto px-4 py-8">
+    <div class="max-w-6xl mx-auto">
+      <div id="meta" class="mb-6 text-sm text-neutral-400">加载中…</div>
+
+      <!-- 固定尺寸的图片列表：一张接一张竖着排 -->
+      <section id="list" class="flex flex-col items-center gap-6">
+        <!-- 图片卡片由 JS 注入 -->
+      </section>
+
+      <div id="empty" class="hidden mt-10 text-center text-neutral-400">未找到该 VIN 的图片</div>
+    </div>
+  </main>
+
+  <script>
+    const BACKEND = 'https://flameauto-write.onrender.com'; // 你的后端
+    const vin = new URLSearchParams(location.search).get('vin') || '';
+    const listEl = document.getElementById('list');
+    const emptyEl = document.getElementById('empty');
+    const metaEl  = document.getElementById('meta');
+    const titleEl = document.getElementById('title');
+
+    titleEl.textContent = vin ? `车辆图片 · ${vin}` : '车辆图片';
+    metaEl.textContent = vin ? `VIN：${vin} · 正在获取图片…` : '缺少 VIN 参数';
+
+    if (!vin) {
+      emptyEl.classList.remove('hidden');
+    } else {
+      loadImages(vin);
+    }
+
+    async function loadImages(vin) {
+      try {
+        const res = await fetch(`${BACKEND}/cloudinary-search?vin=${encodeURIComponent(vin)}`);
+        const data = await res.json();
+
+        const items = Array.isArray(data.resources) ? data.resources : [];
+        if (!items.length) {
+          metaEl.textContent = `VIN：${vin}`;
+          emptyEl.classList.remove('hidden');
+          return;
+        }
+
+        // 排序：vinmain -> vin1..vin9… -> 其他
+        const sorted = items
+          .slice()
+          .sort((a, b) => orderKey(a.public_id).localeCompare(orderKey(b.public_id)));
+
+        // 渲染固定尺寸图片
+        listEl.innerHTML = '';
+        sorted.forEach((r, idx) => {
+          const card = document.createElement('article');
+          card.className = 'flex flex-col items-center gap-2';
+
+          const label = document.createElement('div');
+          label.className = 'text-xs text-neutral-400';
+          label.textContent = `${idx + 1}/${sorted.length} · ${r.public_id || ''}`;
+
+          const box = document.createElement('div');
+          box.className = 'img-box shadow-glow';
+
+          // 使用 secure_url；浏览器按需加载
+          const img = document.createElement('img');
+          img.loading = 'lazy';
+          img.decoding = 'async';
+          img.src = r.secure_url;
+
+          box.appendChild(img);
+          card.appendChild(box);
+          card.appendChild(label);
+          listEl.appendChild(card);
+        });
+
+        metaEl.textContent = `VIN：${vin} · 共 ${sorted.length} 张`;
+      } catch (e) {
+        console.error(e);
+        metaEl.textContent = `VIN：${vin} · 加载失败`;
+        emptyEl.textContent = '加载图片失败，请稍后再试';
+        emptyEl.classList.remove('hidden');
+      }
+    }
+
+    // 把 public_id 转换为排序用 key：
+    //  .../VIN/VINmain → 000_main
+    //  .../VIN/VIN1    → 001
+    //  .../VIN/VIN10   → 010
+    //  其他放最后
+    function orderKey(publicId = '') {
+      const p = publicId.split('/').pop() || ''; // 文件名部分
+      if (/main$/i.test(p)) return '000_main';
+      const m = p.match(/(\d+)$/); // 末尾数字
+      if (m) {
+        return String(m[1]).padStart(3, '0'); // 001, 002, ...
+      }
+      return 'zzz_' + p; // 其他排在最后
+    }
+  </script>
+</body>
+</html>
