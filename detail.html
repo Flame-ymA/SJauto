@@ -2,139 +2,199 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>车辆详情 - SJ Auto</title>
-  <!-- Tailwind（开发/预览用）。生产请改本地构建版 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <!-- 基础安全（GitHub Pages 单文件版，含最小白名单） -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self' https:;
+                 img-src 'self' https: data:;
+                 style-src 'self' 'unsafe-inline' https:;
+                 script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;
+                 connect-src 'self' https://flameauto-write.onrender.com;
+                 object-src 'none'; base-uri 'self'; frame-ancestors 'self'">
+  <meta name="referrer" content="no-referrer"/>
+
+  <!-- Tailwind（预览/开发用；生产建议改为本地构建） -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          colors: {
-            sjgold: '#FFD700'
-          },
+          colors: { sjgold: '#FFD700' },
           boxShadow: {
-            'gold': '0 10px 25px -5px rgba(255,215,0,0.15), 0 8px 10px -6px rgba(255,215,0,0.08)'
+            gold: '0 10px 25px -5px rgba(255,215,0,0.15), 0 8px 10px -6px rgba(255,215,0,0.08)'
           }
         }
       }
     }
   </script>
+
+  <style>
+    .btn-disabled { opacity:.5; pointer-events:none; }
+  </style>
 </head>
 <body class="min-h-screen bg-black text-sjgold">
-  <!-- 顶部条（可按需隐藏） -->
+  <!-- 顶部条 -->
   <header class="sticky top-0 z-10 backdrop-blur bg-black/60 border-b border-sjgold/20">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="index.html" class="text-sm md:text-base opacity-80 hover:opacity-100">← 返回首页</a>
+      <a href="index.html" class="text-sm md:text-base opacity-80 hover:opacity-100" rel="noopener noreferrer">← 返回首页</a>
       <div id="vinBadge" class="text-xs md:text-sm tracking-wider opacity-70"></div>
     </div>
   </header>
 
   <main class="max-w-6xl mx-auto px-4 py-6 md:py-10">
-    <!-- 主内容：左大图 / 右描述，5 列：左 3，右 2 -->
+    <!-- 左图右文 -->
     <div class="grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-8 items-start">
-      <!-- 图廊（左侧更宽） -->
+      <!-- 图廊 -->
       <section class="md:col-span-3 w-full flex flex-col items-center">
-        <div
-          class="w-full md:w-[720px] h-[280px] sm:h-[360px] md:h-[480px] 
-                 bg-neutral-900/70 rounded-2xl ring-1 ring-sjgold/20 
-                 shadow-gold overflow-hidden flex items-center justify-center">
-          <img
-            id="carImage"
-            alt="车辆图片"
-            class="w-full h-full object-cover select-none"
-            src="https://placehold.co/720x480/111111/FFD700?text=Loading..."
-          />
+        <div class="w-full md:w-[720px] h-[280px] sm:h-[360px] md:h-[480px]
+                    bg-neutral-900/70 rounded-2xl ring-1 ring-sjgold/20
+                    shadow-gold overflow-hidden flex items-center justify-center">
+          <img id="carImage" alt="车辆图片"
+               class="w-full h-full object-cover select-none"
+               src="https://placehold.co/720x480/111111/FFD700?text=Loading..."
+               decoding="async" loading="eager" referrerpolicy="no-referrer"/>
         </div>
 
-      <!-- 导航按钮 -->
-<div class="mt-4 flex gap-4 justify-center">
-  <button
-    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full 
-           bg-gradient-to-b from-yellow-400 to-yellow-500 text-black font-medium text-sm
-           shadow-[0_4px_14px_rgba(255,215,0,0.4)] 
-           hover:shadow-[0_6px_20px_rgba(255,215,0,0.6)] 
-           hover:brightness-105 active:scale-95 transition-all duration-200 ease-in-out"
-    onclick="prevImage()">
-    ⬅️ <span>上一张</span>
-  </button>
+        <!-- 导航按钮（胶囊样式，固定一行） -->
+        <div class="mt-4 flex gap-3 justify-center">
+          <button id="btnPrev" type="button"
+                  class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full
+                         bg-gradient-to-b from-yellow-400 to-yellow-500 text-black font-medium text-sm
+                         shadow-[0_4px_14px_rgba(255,215,0,0.4)]
+                         hover:shadow-[0_6px_20px_rgba(255,215,0,0.6)]
+                         hover:brightness-105 active:scale-95 transition-all"
+                  onclick="prevImage()">⬅️ <span>上一张</span></button>
 
-  <button
-    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full 
-           bg-gradient-to-b from-yellow-400 to-yellow-500 text-black font-medium text-sm
-           shadow-[0_4px_14px_rgba(255,215,0,0.4)] 
-           hover:shadow-[0_6px_20px_rgba(255,215,0,0.6)] 
-           hover:brightness-105 active:scale-95 transition-all duration-200 ease-in-out"
-    onclick="nextImage()">
-    <span>下一张</span> ➡️
-  </button>
-</div>
+          <button id="btnNext" type="button"
+                  class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full
+                         bg-gradient-to-b from-yellow-400 to-yellow-500 text-black font-medium text-sm
+                         shadow-[0_4px_14px_rgba(255,215,0,0.4)]
+                         hover:shadow-[0_6px_20px_rgba(255,215,0,0.6)]
+                         hover:brightness-105 active:scale-95 transition-all"
+                  onclick="nextImage()"><span>下一张</span> ➡️</button>
+        </div>
 
-        <!-- 缩略图（可选） -->
+        <!-- 缩略图 -->
         <div id="thumbs" class="mt-5 grid grid-cols-6 gap-2 w-full md:w-[720px]"></div>
       </section>
 
-      <!-- 描述（右侧稍窄） -->
-      <aside
-        class="md:col-span-2 w-full 
-               bg-neutral-950/70 rounded-2xl ring-1 ring-sjgold/15 shadow-gold
-               p-5 md:p-6">
+      <!-- 描述 -->
+      <aside class="md:col-span-2 w-full bg-neutral-950/70 rounded-2xl ring-1 ring-sjgold/15 shadow-gold p-5 md:p-6">
         <h2 class="text-xl md:text-2xl font-bold mb-3">车辆描述</h2>
-        <div id="descText" class="leading-relaxed text-sjgold/90">
-          加载中...
-        </div>
-
-        <div id="report" class="mt-8 text-right">
-          <!-- 如果你之后要放事故报告链接，可在这里注入 -->
-        </div>
+        <div id="descText" class="leading-relaxed text-sjgold/90">加载中...</div>
+        <div id="report" class="mt-8 text-right"></div>
       </aside>
     </div>
   </main>
 
   <script>
-    const vin = new URLSearchParams(window.location.search).get('vin');
+    // ===== 配置（全部走你后端）=====
+    const BACKEND = 'https://flameauto-write.onrender.com';
+    const vin = new URLSearchParams(window.location.search).get('vin')?.trim();
     const vinBadge = document.getElementById('vinBadge');
     if (vin) vinBadge.textContent = `VIN: ${vin}`;
 
     let currentIndex = 0;
     let imageUrls = [];
 
-    // ✅ 加载 Cloudinary 图片（后端 search 接口）
-    async function loadImages() {
+    // Cloudinary 变换：把 /upload/ 替换为 /upload/{transforms}/
+    function withTransform(url, transforms) {
       try {
-        const response = await fetch(`https://flameauto-write.onrender.com/cloudinary-search?vin=${vin}`);
-        const data = await response.json();
-
-        const resources = data.resources || [];
-        imageUrls = resources.map(img => img.secure_url);
-
-        const imgEl = document.getElementById('carImage');
-        if (imageUrls.length === 0) {
-          imgEl.src = 'https://placehold.co/720x480/111111/FFD700?text=No+Image';
-        } else {
-          imgEl.src = imageUrls[0];
-          renderThumbs();
-        }
-      } catch (error) {
-        console.error('加载图片失败', error);
-        document.getElementById('carImage').src =
-          'https://placehold.co/720x480/111111/FFD700?text=Error';
+        const u = new URL(url);
+        return u.href.replace('/upload/', `/upload/${transforms}/`);
+      } catch {
+        return url;
       }
     }
 
-    // ✅ 缩略图渲染（可点击切换）
-    function renderThumbs() {
+    // 优先把 main 放首位
+    function sortMainFirst(list) {
+      const main = list.find(u => /main\./i.test(u));
+      if (!main) return list;
+      return [main, ...list.filter(u => u !== main)];
+    }
+
+    // 网络请求超时小工具
+    async function fetchWithTimeout(resource, options = {}) {
+      const { timeout = 12000 } = options;
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeout);
+      try {
+        const resp = await fetch(resource, { ...options, signal: controller.signal });
+        return resp;
+      } finally {
+        clearTimeout(id);
+      }
+    }
+
+    // ====== 加载图片（后端 Cloudinary 搜索）======
+    async function loadImages() {
+      const imgEl = document.getElementById('carImage');
+      const btnPrev = document.getElementById('btnPrev');
+      const btnNext = document.getElementById('btnNext');
+
+      if (!vin) {
+        imgEl.src = 'https://placehold.co/720x480/111111/FFD700?text=No+VIN';
+        btnPrev.classList.add('btn-disabled');
+        btnNext.classList.add('btn-disabled');
+        return;
+      }
+
+      try {
+        const res = await fetchWithTimeout(`${BACKEND}/cloudinary-search?vin=${encodeURIComponent(vin)}`, { timeout: 15000 });
+        if (!res.ok) throw new Error('cloudinary-search failed');
+        const data = await res.json();
+
+        const resources = Array.isArray(data.resources) ? data.resources : [];
+        let urls = resources.map(r => r.secure_url).filter(Boolean);
+
+        // 优先 main
+        urls = sortMainFirst(urls);
+
+        if (urls.length === 0) {
+          imgEl.src = 'https://placehold.co/720x480/111111/FFD700?text=No+Image';
+          btnPrev.classList.add('btn-disabled');
+          btnNext.classList.add('btn-disabled');
+          return;
+        }
+
+        // 固定清晰度与尺寸（主图 720×480）
+        imageUrls = urls.map(u => withTransform(u, 'c_fill,w_720,h_480,q_auto,f_auto'));
+        currentIndex = 0;
+        imgEl.src = imageUrls[0];
+        btnPrev.classList.remove('btn-disabled');
+        btnNext.classList.remove('btn-disabled');
+        renderThumbs(urls);
+      } catch (e) {
+        console.error(e);
+        imgEl.src = 'https://placehold.co/720x480/111111/FFD700?text=Error';
+        document.getElementById('btnPrev').classList.add('btn-disabled');
+        document.getElementById('btnNext').classList.add('btn-disabled');
+      }
+    }
+
+    // ====== 缩略图（固定 240×160）======
+    function renderThumbs(rawUrls) {
       const wrap = document.getElementById('thumbs');
       wrap.innerHTML = '';
-      imageUrls.forEach((url, idx) => {
+      const thumbs = rawUrls.map(u => withTransform(u, 'c_fill,w_240,h_160,q_auto,f_auto'));
+
+      thumbs.forEach((url, idx) => {
         const btn = document.createElement('button');
         btn.className =
-          'relative aspect-[4/3] w-full overflow-hidden rounded-lg ring-1 ring-sjgold/20 hover:ring-sjgold/40 transition';
-        btn.innerHTML = `<img src="${url}" class="w-full h-full object-cover" alt="thumb ${idx+1}">`;
+          'relative aspect-[3/2] w-full overflow-hidden rounded-lg ring-1 ring-sjgold/20 hover:ring-sjgold/40 transition';
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = `thumb ${idx+1}`;
+        img.className = 'w-full h-full object-cover';
+        img.referrerPolicy = 'no-referrer';
         btn.onclick = () => {
           currentIndex = idx;
-          document.getElementById('carImage').src = imageUrls[currentIndex];
+          document.getElementById('carImage').src = imageUrls[idx]; // 用大图尺寸版本
         };
+        btn.appendChild(img);
         wrap.appendChild(btn);
       });
     }
@@ -151,37 +211,24 @@
       document.getElementById('carImage').src = imageUrls[currentIndex];
     }
 
-    // ✅ 加载描述文字（Google Sheets）
+    // ====== 加载描述（后端代理，不暴露 API Key）======
     async function loadDescription() {
-      const SHEET_ID = '1ZWlrgY0j4AHPkvJ6MQn7-YAz-zxqnDb_BVtT-d2YGcs';
-      const API_KEY  = 'AIzaSyBdYLXN_nYf9S-5SMZ8FG1u89XZgpa1mjc';
+      const descEl = document.getElementById('descText');
+      if (!vin) { descEl.textContent = '未找到该车辆'; return; }
+
       try {
-        const res  = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1?key=${API_KEY}`);
+        const res = await fetchWithTimeout(`${BACKEND}/sheet1/detail?vin=${encodeURIComponent(vin)}`, { timeout: 12000 });
+        if (!res.ok) throw new Error('sheet1/detail failed');
         const data = await res.json();
-
-        const headers    = data.values?.[0] || [];
-        const vinIndex   = headers.indexOf('VIN');
-        const detailIndex= headers.indexOf('Detail');
-
-        const descEl = document.getElementById('descText');
-
-        if (vinIndex === -1 || detailIndex === -1) {
-          descEl.textContent = '未找到描述字段';
-          return;
-        }
-
-        const row = data.values.find(r => r[vinIndex] === vin);
-        if (row) {
-          descEl.textContent = row[detailIndex] || '暂无描述';
-        } else {
-          descEl.textContent = '未找到该车辆';
-        }
+        const text = (data && typeof data.detail === 'string') ? data.detail : '';
+        descEl.textContent = text || '暂无描述';
       } catch (err) {
         console.error('加载描述失败:', err);
-        document.getElementById('descText').textContent = '描述加载失败';
+        descEl.textContent = '暂无描述';
       }
     }
 
+    // 启动
     loadImages();
     loadDescription();
   </script>
