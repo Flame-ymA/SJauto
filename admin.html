@@ -4,18 +4,15 @@
   <meta charset="UTF-8" />
   <title>SJ Auto Inventory Admin Panel</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <!-- Tailwind CDN -->
+  <!-- Tailwind CDN（生产建议改为构建版本） -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    // 小幅自定义主题色（接近 #FFD700 的金色）
     tailwind.config = {
       theme: {
         extend: {
-          colors: {
-            sjgold: '#FFD700'
-          },
+          colors: { sjgold: '#FFD700' },
           boxShadow: {
-            'glow': '0 0 0 1px rgba(255,215,0,0.25), 0 10px 25px -5px rgba(0,0,0,0.5)'
+            glow: '0 0 0 1px rgba(255,215,0,0.25), 0 10px 25px -5px rgba(0,0,0,0.5)'
           }
         }
       }
@@ -26,9 +23,7 @@
   <!-- 顶部栏 -->
   <header class="sticky top-0 z-10 bg-zinc-950/80 backdrop-blur border-b border-sjgold/30">
     <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-      <h1 class="text-xl md:text-2xl font-semibold tracking-wide">
-        SJ Auto · Admin
-      </h1>
+      <h1 class="text-xl md:text-2xl font-semibold tracking-wide">SJ Auto · Admin</h1>
       <div class="flex items-center gap-3">
         <label class="inline-flex items-center gap-3 px-3 py-2 rounded-xl border border-sjgold/30 hover:border-sjgold/60 transition">
           <input id="excelFile" type="file" class="hidden" />
@@ -43,17 +38,17 @@
 
   <!-- 主体 -->
   <main class="max-w-6xl mx-auto px-4 py-6">
-    <!-- 表格卡片 -->
     <div class="rounded-2xl border border-sjgold/30 bg-zinc-950/60 shadow-glow">
       <div class="px-5 py-4 border-b border-sjgold/20 flex items-center justify-between">
         <h2 class="text-lg font-semibold">库存列表</h2>
         <span id="rowCount" class="text-xs text-sjgold/70"></span>
       </div>
 
-      <!-- 可滚动表格 -->
-      <div class="overflow-auto">
+      <!-- 固定高度 + 可滚动容器，表头 sticky 参照它 -->
+      <div class="max-h-[70vh] overflow-auto">
         <table class="min-w-full text-sm">
-          <thead class="bg-zinc-900 sticky top-[64px] z-10 border-b border-sjgold/20">
+          <!-- 表头吸顶从容器顶部算起，避免盖住第一行 -->
+          <thead class="sticky top-0 z-10 bg-zinc-900 border-b border-sjgold/20 shadow-sm">
             <tr class="text-left">
               <th class="px-4 py-3 font-semibold">Year</th>
               <th class="px-4 py-3 font-semibold">Make</th>
@@ -103,7 +98,7 @@
           const tr = document.createElement('tr');
           tr.className = 'hover:bg-zinc-900/60 transition';
 
-          // ✅ 仅显示 0~8 列（不显示 Detail）
+          // 仅显示 0~8 列（不显示 Detail）
           const displayCols = [0,1,2,3,4,5,6,7,8];
           displayCols.forEach(colIndex => {
             const td = document.createElement('td');
@@ -231,3 +226,4 @@
   </script>
 </body>
 </html>
+
