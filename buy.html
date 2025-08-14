@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SJ Auto 优质车源</title>
+  <title>SJ Auto - Premium Inventory</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -19,21 +19,21 @@
   </script>
 </head>
 <body class="min-h-screen bg-black text-sjgold">
-  <!-- 顶部导航 -->
+  <!-- Top Navigation -->
   <header class="sticky top-0 z-10 backdrop-blur bg-black/70 border-b border-sjgold/20">
     <nav class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
       <div class="flex items-center gap-6 text-sm">
-        <a href="index.html" class="opacity-80 hover:opacity-100">返回首页</a>
-        <a href="sale.html" class="opacity-60 hover:opacity-100">卖车</a>
+        <a href="index.html" class="opacity-80 hover:opacity-100">Back to Home</a>
+        <a href="sale.html" class="opacity-60 hover:opacity-100">Sell</a>
       </div>
-      <div class="text-xs opacity-70">SJ Auto — 优质车源</div>
+      <div class="text-xs opacity-70">SJ Auto — Premium Inventory</div>
     </nav>
   </header>
 
   <main class="max-w-7xl mx-auto px-4 py-6 md:py-10">
-    <h1 class="text-2xl md:text-3xl font-bold tracking-wide mb-6">在售车源</h1>
+    <h1 class="text-2xl md:text-3xl font-bold tracking-wide mb-6">Available Cars</h1>
     <div id="car-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-      <!-- JS 动态填充 -->
+      <!-- JS dynamic content -->
     </div>
   </main>
 
@@ -76,14 +76,14 @@
           const price   = row[priceIdx] || '';
           const mileage = row[mileageIdx] || '';
 
-          // 卡片
+          // Card
           const card = document.createElement('article');
           card.className = `
             group bg-neutral-950/70 rounded-2xl ring-1 ring-sjgold/15 shadow-gold
             overflow-hidden flex flex-col hover:ring-sjgold/30 transition
           `;
 
-          // 顶部图片
+          // Top image
           const imgWrap = document.createElement('div');
           imgWrap.className = 'w-full h-44 sm:h-48 md:h-52 bg-neutral-900 overflow-hidden';
           const img = document.createElement('img');
@@ -95,27 +95,27 @@
           };
           imgWrap.appendChild(img);
 
-          // 信息区（相对定位，给右下角按钮预留空间）
+          // Info section
           const bodyBox = document.createElement('div');
-          bodyBox.className = 'relative p-4 pb-16'; // pb-16 预留按钮高度
+          bodyBox.className = 'relative p-4 pb-16'; // reserve space for button
 
-          // 标题允许换行，确保不被截断
+          // Title
           const title = document.createElement('h3');
           title.className = 'text-base md:text-lg font-semibold leading-snug';
           title.textContent = `${year} ${make} ${model}`.trim();
 
-          // 价格
+          // Price
           const priceEl = document.createElement('div');
           priceEl.className = 'mt-1 text-lg md:text-xl font-bold text-sjgold/95';
-          priceEl.textContent = price ? `CAD $${fmtPrice(price)}` : '价格面议';
+          priceEl.textContent = price ? `CAD $${fmtPrice(price)}` : 'Price on Request';
 
-          // 颜色/里程
+          // Color / Mileage
           const meta = document.createElement('div');
           meta.className = 'mt-2 text-sm text-sjgold/80 space-y-1';
-          if (color)   meta.insertAdjacentHTML('beforeend', `<p>颜色：${color}</p>`);
-          if (mileage) meta.insertAdjacentHTML('beforeend', `<p>里程：${fmtMileage(mileage)}</p>`);
+          if (color)   meta.insertAdjacentHTML('beforeend', `<p>Color: ${color}</p>`);
+          if (mileage) meta.insertAdjacentHTML('beforeend', `<p>Mileage: ${fmtMileage(mileage)}</p>`);
 
-          // 右下角按钮（绝对定位）
+          // View details button
           const btn = document.createElement('button');
           btn.className = `
             absolute right-4 bottom-4 inline-flex items-center justify-center
@@ -123,7 +123,7 @@
             whitespace-nowrap hover:brightness-95 active:brightness-90
             ring-1 ring-sjgold/30 transition
           `;
-          btn.textContent = '查看详细';
+          btn.textContent = 'View Details';
           btn.onclick = () => window.location.href = `detail.html?vin=${encodeURIComponent(vin)}`;
 
           bodyBox.appendChild(title);
@@ -136,11 +136,11 @@
           container.appendChild(card);
         });
       } catch (err) {
-        console.error('加载表格失败:', err);
+        console.error('Failed to load inventory:', err);
         const container = document.getElementById('car-list');
         const tip = document.createElement('div');
         tip.className = 'col-span-full text-center py-12 opacity-80';
-        tip.textContent = '车源加载失败，请稍后重试。';
+        tip.textContent = 'Failed to load vehicles. Please try again later.';
         container.appendChild(tip);
       }
     }
