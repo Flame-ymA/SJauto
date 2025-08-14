@@ -10,6 +10,9 @@
     .sj-gold { color: var(--sj); }
     .sj-bg-gold { background-color: var(--sj); }
     .sj-border-gold { border-color: var(--sj); }
+    .nav-link {
+      @apply px-3 py-1 rounded text-sm font-medium text-neutral-200 hover:text-black hover:bg-sj-gold transition;
+    }
   </style>
 </head>
 <body class="min-h-screen bg-black text-neutral-200">
@@ -20,9 +23,9 @@
         <img src="https://res.cloudinary.com/duwckagtg/image/upload/v1754600465/image_j1peaj.png" alt="SJ" class="h-8 w-8 rounded-md ring-1 ring-white/10"/>
         <span class="font-semibold tracking-wider sj-gold">SJ Auto</span>
       </a>
-      <nav class="text-sm">
-        <a href="index.html" class="px-3 py-1 rounded hover:bg-white/5">Home</a>
-        <a href="buy.html" class="px-3 py-1 rounded hover:bg-white/5">Buy</a>
+      <nav>
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="buy.html" class="nav-link">Buy</a>
       </nav>
     </div>
   </header>
