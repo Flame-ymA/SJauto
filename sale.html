@@ -35,6 +35,31 @@
     <p class="mt-2 text-sm text-neutral-400">Please fill in the vehicle information and (optionally) upload configuration photos. We'll contact you shortly after submission.</p>
 
     <form id="sellForm" class="mt-8 space-y-6 bg-neutral-900/60 border rounded-xl sj-border-gold p-5" novalidate>
+     <!-- 客户姓名 -->
+<div>
+  <label for="name" class="block text-sm mb-1">Name<span class="sj-gold">*</span></label>
+  <input id="name" name="name" type="text" required
+         placeholder="Your full name"
+         class="w-full rounded-lg bg-black/60 border sj-border-gold px-3 py-2 outline-none focus:ring-2 focus:ring-yellow-500" />
+</div>
+
+<!-- 电话 -->
+<div>
+  <label for="phone" class="block text-sm mb-1">Phone<span class="sj-gold">*</span></label>
+  <input id="phone" name="phone" type="tel" required
+         placeholder="e.g., 416-123-4567"
+         pattern="^\\+?[0-9\\-\\s]{7,20}$"
+         class="w-full rounded-lg bg-black/60 border sj-border-gold px-3 py-2 outline-none focus:ring-2 focus:ring-yellow-500" />
+  <p class="mt-1 text-xs text-neutral-400">Enter a valid phone number.</p>
+</div>
+
+<!-- 邮箱 -->
+<div>
+  <label for="email" class="block text-sm mb-1">E-mail<span class="sj-gold">*</span></label>
+  <input id="email" name="email" type="email" required
+         placeholder="e.g., name@example.com"
+         class="w-full rounded-lg bg-black/60 border sj-border-gold px-3 py-2 outline-none focus:ring-2 focus:ring-yellow-500" />
+</div>
       <!-- VIN -->
       <div>
         <label for="vin" class="block text-sm mb-1">VIN (Vehicle Identification Number)<span class="sj-gold">*</span></label>
@@ -259,12 +284,18 @@
       const submitBtn = document.getElementById('submitBtn');
       const formMsg = document.getElementById('formMsg');
 
-      const vin = vinInput.value.trim().toUpperCase();
-      const mileage = document.getElementById('mileage').value.trim();
-      const accident = document.getElementById('accident').value;
-      const exterior_color = document.getElementById('exterior_color').value.trim();
-      const interior_color = document.getElementById('interior_color').value.trim();
-
+const name = document.getElementById('name').value.trim();
+const phone = document.getElementById('phone').value.trim();
+const email = document.getElementById('email').value.trim();
+const vin = vinInput.value.trim().toUpperCase();
+const mileage = document.getElementById('mileage').value.trim();
+const accident = document.getElementById('accident').value;
+const exterior_color = document.getElementById('exterior_color').value.trim();
+const interior_color = document.getElementById('interior_color').value.trim();
+      if (!name || !phone || !email) {
+  toast('请填写 Name / Phone / E-mail', 'warn');
+  return;
+}
       if (!validateVIN(vin)) {
         toast('VIN 不合法，请检查（17 位且不含 I/O/Q）', 'warn');
         return;
