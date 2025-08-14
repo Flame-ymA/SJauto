@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>车辆详情 - SJ Auto</title>
+  <title>Vehicle Details - SJ Auto</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
   <!-- 基础安全（GitHub Pages 单文件版，含最小白名单） -->
@@ -38,7 +38,7 @@
   <!-- 顶部条 -->
   <header class="sticky top-0 z-10 backdrop-blur bg-black/60 border-b border-sjgold/20">
     <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="index.html" class="text-sm md:text-base opacity-80 hover:opacity-100" rel="noopener noreferrer">← 返回首页</a>
+      <a href="index.html" class="text-sm md:text-base opacity-80 hover:opacity-100" rel="noopener noreferrer">← Back to Home</a>
       <div id="vinBadge" class="text-xs md:text-sm tracking-wider opacity-70"></div>
     </div>
   </header>
@@ -51,7 +51,7 @@
         <div class="w-full md:w-[720px] h-[280px] sm:h-[360px] md:h-[480px]
                     bg-neutral-900/70 rounded-2xl ring-1 ring-sjgold/20
                     shadow-gold overflow-hidden flex items-center justify-center">
-          <img id="carImage" alt="车辆图片"
+          <img id="carImage" alt="Vehicle Image"
                class="w-full h-full object-cover select-none"
                src="https://placehold.co/720x480/111111/FFD700?text=Loading..."
                decoding="async" loading="eager" referrerpolicy="no-referrer"/>
@@ -65,7 +65,7 @@
                          shadow-[0_4px_14px_rgba(255,215,0,0.4)]
                          hover:shadow-[0_6px_20px_rgba(255,215,0,0.6)]
                          hover:brightness-105 active:scale-95 transition-all"
-                  onclick="prevImage()">⬅️ <span>上一张</span></button>
+                  onclick="prevImage()">⬅️ <span>Previous</span></button>
 
           <button id="btnNext" type="button"
                   class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full
@@ -73,7 +73,7 @@
                          shadow-[0_4px_14px_rgba(255,215,0,0.4)]
                          hover:shadow-[0_6px_20px_rgba(255,215,0,0.6)]
                          hover:brightness-105 active:scale-95 transition-all"
-                  onclick="nextImage()"><span>下一张</span> ➡️</button>
+                  onclick="nextImage()"><span>Next</span> ➡️</button>
         </div>
 
         <!-- 缩略图 -->
@@ -82,8 +82,8 @@
 
       <!-- 描述 -->
       <aside class="md:col-span-2 w-full bg-neutral-950/70 rounded-2xl ring-1 ring-sjgold/15 shadow-gold p-5 md:p-6">
-        <h2 class="text-xl md:text-2xl font-bold mb-3">车辆描述</h2>
-        <div id="descText" class="leading-relaxed text-sjgold/90">加载中...</div>
+        <h2 class="text-xl md:text-2xl font-bold mb-3">Vehicle Description</h2>
+        <div id="descText" class="leading-relaxed text-sjgold/90">Loading...</div>
         <div id="report" class="mt-8 text-right"></div>
       </aside>
     </div>
@@ -214,17 +214,17 @@
     // ====== 加载描述（后端代理，不暴露 API Key）======
     async function loadDescription() {
       const descEl = document.getElementById('descText');
-      if (!vin) { descEl.textContent = '未找到该车辆'; return; }
+      if (!vin) { descEl.textContent = 'Vehicle not found'; return; }
 
       try {
         const res = await fetchWithTimeout(`${BACKEND}/sheet1/detail?vin=${encodeURIComponent(vin)}`, { timeout: 12000 });
         if (!res.ok) throw new Error('sheet1/detail failed');
         const data = await res.json();
         const text = (data && typeof data.detail === 'string') ? data.detail : '';
-        descEl.textContent = text || '暂无描述';
+        descEl.textContent = text || 'No description available.';
       } catch (err) {
-        console.error('加载描述失败:', err);
-        descEl.textContent = '暂无描述';
+        console.error('Failed to load description:', err);
+        descEl.textContent = 'No description available.';
       }
     }
 
