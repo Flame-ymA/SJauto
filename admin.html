@@ -102,71 +102,79 @@
     const CLOUDINARY_CLOUD_NAME = 'duwckagtg';
 
     // 加载表格（从后端 sheet1 读取）
-    async function loadSheet() {
-      try {
-        const res = await fetch(`${BACKEND}/sheet1`);
-        const data = await res.json();
+async function loadSheet() {
+  try {
+    const res = await fetch(`${BACKEND}/sheet1`);
+    const data = await res.json();
 
-        if (!data.ok) {
-          console.error('Sheet1 读取失败：', data);
-          alert('读取表格失败，稍后重试。');
-          return;
-        }
-
-        const tbody = document.getElementById('tableBody');
-        const count = document.getElementById('rowCount');
-        tbody.innerHTML = '';
-
-     // data.values 的第 0 行可能是表头，也可能是数据
-let rows = data.values || [];
-if (rows.length && rows[0].includes('VIN')) {
-  // 只有当第一行确实是表头才跳过
-  rows = rows.slice(1);
-}
-count.textContent = `共 ${rows.length} 条`;
-
-rows.forEach((row) => {
-  const tr = document.createElement('tr');
-  tr.className = 'hover:bg-zinc-900/60 transition';
-  // ...
-});
-          // ✅ 仅显示 0~8 列（不显示 Detail）
-          const displayCols = [0,1,2,3,4,5,6,7,8];
-          displayCols.forEach(colIndex => {
-            const td = document.createElement('td');
-            td.className = 'px-4 py-3 truncate'; // 超出用省略号
-            td.textContent = (row[colIndex] ?? '');
-            tr.appendChild(td);
-          });
-
-          const vin = row[8] || '';
-          const tdOps = document.createElement('td');
-          tdOps.className = 'px-4 py-3';
-
-          const wrap = document.createElement('div');
-          wrap.className = 'flex justify-center gap-2';
-
-          const uploadBtn = document.createElement('button');
-          uploadBtn.className = 'w-24 px-3 py-1.5 rounded-lg bg-sjgold text-black font-semibold hover:brightness-95 active:brightness-90 transition';
-          uploadBtn.textContent = 'Upload';
-          uploadBtn.onclick = () => uploadImageSigned(vin);
-          wrap.appendChild(uploadBtn);
-
-          const editBtn = document.createElement('button');
-          editBtn.className = 'w-24 px-3 py-1.5 rounded-lg border border-sjgold/40 text-sjgold hover:bg-zinc-900 active:bg-zinc-800 transition';
-          editBtn.textContent = '编辑描述';
-          editBtn.onclick = () => window.open(`edit-description.html?vin=${encodeURIComponent(vin)}`, '_blank');
-          wrap.appendChild(editBtn);
-
-          tdOps.appendChild(wrap);
-          tr.appendChild(tdOps);
-          tbody.appendChild(tr);
-        });
-      } catch (err) {
-        console.error(err);
-        alert('读取表格失败：' + err.message);
-      }
+    if (!data.ok) {
+      console.error('Sheet1 读取失败：', data);
+      alert('读取表格失败，稍后重试。');
+      return;
     }
+
+    const tbody = document.getElementById('tableBody');
+    const count = document.getElementById('rowCount');
+    tbody.innerHTML = '';
+
+    const values = data.values || [];
+    if (!values.length) {
+      count.textContent = '共 0 条';
+      return;
+    }
+
+    // 👇 仅当第一行明显是表头时才跳过
+    const first = values[0].map(v => String(v || '').trim().toLowerCase());
+    const looksLikeHeader =
+      first.includes('vin') ||
+      first.includes('year') ||
+      first.includes('make') ||
+      first.includes('model');
+
+    const rows = looksLikeHeader ? values.slice(1) : values;
+    count.textContent = `共 ${rows.length} 条`;
+
+    rows.forEach((row) => {
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-zinc-900/60 transition';
+
+      // 仅显示 0~8 列（不显示 Detail）
+      const displayCols = [0,1,2,3,4,5,6,7,8];
+      displayCols.forEach(colIndex => {
+        const td = document.createElement('td');
+        td.className = 'px-4 py-3 truncate';
+        td.textContent = (row[colIndex] ?? '');
+        tr.appendChild(td);
+      });
+
+      const vin = row[8] || '';
+      const tdOps = document.createElement('td');
+      tdOps.className = 'px-4 py-3';
+
+      const wrap = document.createElement('div');
+      wrap.className = 'flex justify-center gap-2';
+
+      const uploadBtn = document.createElement('button');
+      uploadBtn.className = 'w-24 px-3 py-1.5 rounded-lg bg-sjgold text-black font-semibold hover:brightness-95 active:brightness-90 transition';
+      uploadBtn.textContent = 'Upload';
+      uploadBtn.onclick = () => uploadImageSigned(vin);
+      wrap.appendChild(uploadBtn);
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'w-24 px-3 py-1.5 rounded-lg border border-sjgold/40 text-sjgold hover:bg-zinc-900 active:bg-zinc-800 transition';
+      editBtn.textContent = '编辑描述';
+      editBtn.onclick = () => window.open(`edit-description.html?vin=${encodeURIComponent(vin)}`, '_blank');
+      wrap.appendChild(editBtn);
+
+      tdOps.appendChild(wrap);
+      tr.appendChild(tdOps);
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error(err);
+    alert('读取表格失败：' + err.message);
+  }
+}
 
     // 上传 Excel（后端增量写入）
     async function uploadExcel() {
