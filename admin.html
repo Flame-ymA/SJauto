@@ -117,14 +117,19 @@
         const count = document.getElementById('rowCount');
         tbody.innerHTML = '';
 
-        // data.values 的第 0 行是表头，这里跳过
-        const rows = (data.values || []).slice(1);
-        count.textContent = `共 ${rows.length} 条`;
+     // data.values 的第 0 行可能是表头，也可能是数据
+let rows = data.values || [];
+if (rows.length && rows[0].includes('VIN')) {
+  // 只有当第一行确实是表头才跳过
+  rows = rows.slice(1);
+}
+count.textContent = `共 ${rows.length} 条`;
 
-        rows.forEach((row) => {
-          const tr = document.createElement('tr');
-          tr.className = 'hover:bg-zinc-900/60 transition';
-
+rows.forEach((row) => {
+  const tr = document.createElement('tr');
+  tr.className = 'hover:bg-zinc-900/60 transition';
+  // ...
+});
           // ✅ 仅显示 0~8 列（不显示 Detail）
           const displayCols = [0,1,2,3,4,5,6,7,8];
           displayCols.forEach(colIndex => {
