@@ -89,7 +89,7 @@
           const img = document.createElement('img');
           img.className = 'w-full h-full object-cover group-hover:scale-[1.02] transition';
           img.alt = `${make} ${model}`;
-          img.src = `https://res.cloudinary.com/${CLOUD}/image/upload/${vin}/${vin}main.jpg`;
+          img.src = `https://res.cloudinary.com/${CLOUD}/image/upload/f_auto,q_auto/${vin}/${vin}main`;
           img.onerror = () => {
             img.src = 'https://placehold.co/800x600/111111/FFD700?text=No+Image';
           };
