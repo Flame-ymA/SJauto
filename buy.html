@@ -32,9 +32,7 @@
 
   <main class="max-w-7xl mx-auto px-4 py-6 md:py-10">
     <h1 class="text-2xl md:text-3xl font-bold tracking-wide mb-6">Available Cars</h1>
-    <div id="car-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-      <!-- JS dynamic content -->
-    </div>
+    <div id="car-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
   </main>
 
   <script>
@@ -44,11 +42,38 @@
     const fmtPrice   = v => v ? String(v).replace(/(\d)(?=(\d{3})+$)/g, '$1,') : '';
     const fmtMileage = v => v ? `${v} km` : '';
 
+    // 根据 VIN 拉 Cloudinary，并把 <img> 的 src 设置为“带版本号”的 URL
+    async function fillImageByVin(vin, imgEl) {
+      try {
+        const r = await fetch(`${BACKEND}/cloudinary-search?vin=${encodeURIComponent(vin)}`);
+        const data = await r.json();
+        const items = Array.isArray(data.resources) ? data.resources : [];
+
+        // 优先 VINmain，然后 VIN1、VIN01…，再其他
+        const main = items.find(x => /main$/i.test(x.public_id))
+                  || items.find(x => /\d+$/.test(x.public_id))
+                  || items[0];
+
+        if (main) {
+          // 版本段 + 自适应格式/质量
+          const url = `https://res.cloudinary.com/${CLOUD}/image/upload/f_auto,q_auto/v${main.version}/${main.public_id}`;
+          imgEl.src = url;
+        } else {
+          imgEl.src = 'https://placehold.co/800x600/111111/FFD700?text=No+Image';
+        }
+      } catch (e) {
+        console.error('image fetch failed for', vin, e);
+        imgEl.src = 'https://placehold.co/800x600/111111/FFD700?text=No+Image';
+      }
+    }
+
     async function loadCars() {
       try {
         const res = await fetch(`${BACKEND}/sheet1`);
         const json = await res.json();
         const rows    = json.values || [];
+        if (!rows.length) return;
+
         const headers = rows[0] || [];
         const body    = rows.slice(1);
 
@@ -65,16 +90,16 @@
         container.innerHTML = '';
 
         body.forEach(row => {
-          const status = (row[statusIdx] || '').toLowerCase();
+          const status = (row?.[statusIdx] || '').toLowerCase();
           if (status === 'sold' || status === 'deleted') return;
 
-          const vin     = row[vinIdx] || '';
-          const year    = row[yearIdx] || '';
-          const make    = row[makeIdx] || '';
-          const model   = row[modelIdx] || '';
-          const color   = row[colorIdx] || '';
-          const price   = row[priceIdx] || '';
-          const mileage = row[mileageIdx] || '';
+          const vin     = row?.[vinIdx] || '';
+          const year    = row?.[yearIdx] || '';
+          const make    = row?.[makeIdx] || '';
+          const model   = row?.[modelIdx] || '';
+          const color   = row?.[colorIdx] || '';
+          const price   = row?.[priceIdx] || '';
+          const mileage = row?.[mileageIdx] || '';
 
           // Card
           const card = document.createElement('article');
@@ -89,17 +114,17 @@
           const img = document.createElement('img');
           img.className = 'w-full h-full object-cover group-hover:scale-[1.02] transition';
           img.alt = `${make} ${model}`;
-          img.src = `https://res.cloudinary.com/${CLOUD}/image/upload/f_auto,q_auto/${vin}/${vin}main`;
-          img.onerror = () => {
-            img.src = 'https://placehold.co/800x600/111111/FFD700?text=No+Image';
-          };
+          img.loading = 'lazy';
+          img.decoding = 'async';
+          img.src = 'https://placehold.co/800x600/111111/FFD700?text=Loading...';
+          img.onerror = () => { img.src = 'https://placehold.co/800x600/111111/FFD700?text=No+Image'; };
           imgWrap.appendChild(img);
 
-          // Info section
+          // Info section（预留底部按钮空间）
           const bodyBox = document.createElement('div');
-          bodyBox.className = 'relative p-4 pb-16'; // reserve space for button
+          bodyBox.className = 'relative p-4 pb-16';
 
-          // Title
+          // Title（不截断不被覆盖）
           const title = document.createElement('h3');
           title.className = 'text-base md:text-lg font-semibold leading-snug';
           title.textContent = `${year} ${make} ${model}`.trim();
@@ -115,7 +140,7 @@
           if (color)   meta.insertAdjacentHTML('beforeend', `<p>Color: ${color}</p>`);
           if (mileage) meta.insertAdjacentHTML('beforeend', `<p>Mileage: ${fmtMileage(mileage)}</p>`);
 
-          // View details button
+          // View details button（右下角固定）
           const btn = document.createElement('button');
           btn.className = `
             absolute right-4 bottom-4 inline-flex items-center justify-center
@@ -134,6 +159,9 @@
           card.appendChild(imgWrap);
           card.appendChild(bodyBox);
           container.appendChild(card);
+
+          // 异步填充“带版本”的主图，避免缓存
+          if (vin) fillImageByVin(vin, img);
         });
       } catch (err) {
         console.error('Failed to load inventory:', err);
