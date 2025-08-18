@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>SJ Auto · 租赁车辆管理</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <!-- Tailwind CDN（开发/预览用） -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -19,22 +18,19 @@
     }
   </script>
   <style>
-    /* 固定 header 高度，方便 sticky 表头定位（本页表头直接贴顶，所以不用做偏移） */
     .app-header { height: 64px; }
   </style>
 </head>
 <body class="min-h-screen bg-black text-sjgold">
 
-  <!-- 顶部栏（固定高度 64px） -->
+  <!-- 顶部 -->
   <header class="app-header sticky top-0 z-20 bg-zinc-950/80 backdrop-blur border-b border-sjgold/30">
     <div class="max-w-6xl mx-auto h-full px-4 flex items-center justify-between">
       <h1 class="text-xl md:text-2xl font-semibold tracking-wide">SJ Auto · Admin · 租赁车辆</h1>
-      <div class="flex items-center gap-3">
-        <a href="admin.html"
-           class="px-4 py-2 rounded-xl border border-sjgold/40 text-sjgold hover:bg-zinc-900 active:bg-zinc-800 transition">
-          返回库存管理
-        </a>
-      </div>
+      <a href="admin.html"
+         class="px-4 py-2 rounded-xl border border-sjgold/40 text-sjgold hover:bg-zinc-900 active:bg-zinc-800 transition">
+        返回库存管理
+      </a>
     </div>
   </header>
 
@@ -46,9 +42,7 @@
         <span id="rowCount" class="text-xs text-sjgold/70"></span>
       </div>
 
-      <!-- 可滚动容器 -->
       <div class="overflow-auto">
-        <!-- 固定列宽：colgroup + table-fixed -->
         <table class="min-w-full text-sm table-fixed">
           <colgroup>
             <col style="width:10rem" />  <!-- StockNumber -->
@@ -61,29 +55,29 @@
             <col style="width:8rem" />   <!-- Price/Month -->
             <col style="width:8rem" />   <!-- Insurance -->
             <col style="width:7rem" />   <!-- Status -->
-            <col style="width:12rem" />  <!-- 操作 -->
+            <col style="width:9rem"  />  <!-- OverKmFee（可选） -->
+            <col style="width:14rem" />  <!-- 操作 -->
           </colgroup>
 
-          <!-- 表头紧贴容器上沿：top:0; 并用 margin-top 微调去缝隙 -->
-          <thead class="bg-zinc-900 sticky z-10 border-b border-sjgold/20" style="top:0; margin-top:-1px;">
+          <!-- 表头紧贴容器上沿 -->
+          <thead class="bg-zinc-900 sticky z-10 border-b border-sjgold/20" style="top:0;">
             <tr class="text-left">
               <th class="px-4 py-3 font-semibold">StockNumber</th>
               <th class="px-4 py-3 font-semibold">Year</th>
               <th class="px-4 py-3 font-semibold">Brand</th>
               <th class="px-4 py-3 font-semibold">Model</th>
               <th class="px-4 py-3 font-semibold">Trim</th>
-              <th class="px-4 py-3 font-semibold">Price/day</th>
+              <th class="px-4 py-3 font-semibold">Price/Day</th>
               <th class="px-4 py-3 font-semibold">Price/Week</th>
               <th class="px-4 py-3 font-semibold">Price/Month</th>
               <th class="px-4 py-3 font-semibold">Insurance</th>
               <th class="px-4 py-3 font-semibold">Status</th>
+              <th class="px-4 py-3 font-semibold">OverKmFee</th>
               <th class="px-4 py-3 font-semibold text-center">操作</th>
             </tr>
           </thead>
 
-          <tbody id="tableBody" class="divide-y divide-sjgold/10">
-            <!-- 行数据由 JS 注入 -->
-          </tbody>
+          <tbody id="tableBody" class="divide-y divide-sjgold/10"></tbody>
         </table>
       </div>
     </div>
@@ -93,78 +87,133 @@
     const BACKEND = 'https://flameauto-write.onrender.com';
     const CLOUDINARY_CLOUD_NAME = 'duwckagtg';
 
-    // 规范化函数：去掉非字母并转小写，用来更稳健地识别“表头”
-    const normalize = (s) => String(s || '').toLowerCase().replace(/[^a-z]/g, '');
+    // 规范化表头：小写 + 去非字母
+    const norm = s => String(s||'').toLowerCase().replace(/[^a-z]/g,'');
 
-    // 加载表格（从后端 sheet3 读取）
     async function loadSheet3() {
       try {
         const res = await fetch(`${BACKEND}/sheet3`);
         const data = await res.json();
-
-        if (!data.ok) {
-          console.error('Sheet3 读取失败：', data);
-          alert('读取表格失败，稍后重试。');
-          return;
-        }
+        if (!data.ok) throw new Error('sheet3 read failed');
 
         const tbody = document.getElementById('tableBody');
         const count = document.getElementById('rowCount');
         tbody.innerHTML = '';
 
         const values = data.values || [];
-        if (!values.length) {
-          count.textContent = '共 0 条';
-          return;
-        }
+        if (!values.length) { count.textContent = '共 0 条'; return; }
 
-        // 仅当第一行明显是表头时才跳过
-        const firstRow = values[0] || [];
-        const firstNormSet = new Set(firstRow.map(normalize));
-        const headerHints = [
-          'stocknumber','year','brand','model','trim','priceday','priceweek','pricemonth','insurance','status'
-        ];
-        const looksLikeHeader = headerHints.some(h => firstNormSet.has(h));
+        // 判断首行是否表头
+        const headRow = values[0] || [];
+        const headSet  = new Set(headRow.map(norm));
+        const hints = ['stocknumber','year','brand','model','trim','priceday','priceweek','pricemonth','insurance','status','overkmfee'];
+        const hasHeader = hints.some(h => headSet.has(h));
 
-        const rows = looksLikeHeader ? values.slice(1) : values;
+        const rows = hasHeader ? values.slice(1) : values;
         count.textContent = `共 ${rows.length} 条`;
 
-        rows.forEach((row) => {
+        // 列索引（兼容不同写法）
+        const idx = (name, fallback = -1) => {
+          const target = norm(name);
+          const pos = headRow.findIndex(h => norm(h) === target);
+          return pos === -1 ? fallback : pos;
+        };
+
+        const cStock = idx('StockNumber', 0);
+        const cYear  = idx('Year', 1);
+        const cBrand = idx('Brand', 2);
+        const cModel = idx('Model', 3);
+        const cTrim  = idx('Trim', 4);
+        const cDay   = idx('Price/Day', 5);
+        const cWeek  = idx('Price/Week', 6);
+        const cMonth = idx('Price/Month', 7);
+        const cIns   = idx('Insurance', 8);
+        const cStatus= idx('Status', 9);
+        const cFee   = headRow.findIndex(h => norm(h) === 'overkmfee'); // 可能不存在
+
+        rows.forEach(row => {
           const tr = document.createElement('tr');
           tr.className = 'hover:bg-zinc-900/60 transition';
 
-          // 依 Sheet3 字段顺序渲染前 10 列
-          const displayCols = [0,1,2,3,4,5,6,7,8,9];
-          displayCols.forEach(colIndex => {
-            const td = document.createElement('td');
-            td.className = 'px-4 py-3 truncate';
-            td.textContent = (row[colIndex] ?? '');
-            tr.appendChild(td);
-          });
+          const td = (text) => {
+            const el = document.createElement('td');
+            el.className = 'px-4 py-3 truncate';
+            el.textContent = text ?? '';
+            return el;
+          };
 
-          const stock = row[0] || ''; // StockNumber
-          const tdOps = document.createElement('td');
-          tdOps.className = 'px-4 py-3';
+          const stock = row[cStock] || '';
 
+          tr.appendChild(td(row[cStock]));
+          tr.appendChild(td(row[cYear]));
+          tr.appendChild(td(row[cBrand]));
+          tr.appendChild(td(row[cModel]));
+          tr.appendChild(td(row[cTrim]));
+          tr.appendChild(td(row[cDay]));
+          tr.appendChild(td(row[cWeek]));
+          tr.appendChild(td(row[cMonth]));
+          tr.appendChild(td(row[cIns]));
+          tr.appendChild(td(row[cStatus]));
+
+          // OverKmFee（可编辑）
+          const feeTd = document.createElement('td');
+          feeTd.className = 'px-4 py-3';
+          if (cFee !== -1) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = row[cFee] ?? '';
+            input.placeholder = '如 0.30';
+            input.className = 'w-28 px-2 py-1 rounded-md bg-black/40 border border-sjgold/30 focus:outline-none focus:ring-2 focus:ring-yellow-500';
+            input.dataset.stock = stock;
+            feeTd.appendChild(input);
+          } else {
+            feeTd.textContent = '—';
+          }
+          tr.appendChild(feeTd);
+
+          // 操作列：Upload / 预览 / 保存费率
+          const ops = document.createElement('td');
+          ops.className = 'px-4 py-3';
           const wrap = document.createElement('div');
-          wrap.className = 'flex justify-center gap-2';
+          wrap.className = 'flex flex-wrap gap-2 justify-center';
 
-          // 上传图片（签名直传 Cloudinary）
-          const uploadBtn = document.createElement('button');
-          uploadBtn.className = 'w-24 px-3 py-1.5 rounded-lg bg-sjgold text-black font-semibold hover:brightness-95 active:brightness-90 transition';
-          uploadBtn.textContent = 'Upload';
-          uploadBtn.onclick = () => uploadImageSigned(stock);
-          wrap.appendChild(uploadBtn);
+          const btnUp = document.createElement('button');
+          btnUp.className = 'px-3 py-1.5 rounded-lg bg-sjgold text-black font-semibold hover:brightness-95 active:brightness-90 transition';
+          btnUp.textContent = 'Upload';
+          btnUp.onclick = () => uploadImageSigned(stock);
+          wrap.appendChild(btnUp);
 
-          // 预览（跳到租车详情页，可后续实现）
-          const viewBtn = document.createElement('button');
-          viewBtn.className = 'w-24 px-3 py-1.5 rounded-lg border border-sjgold/40 text-sjgold hover:bg-zinc-900 active:bg-zinc-800 transition';
-          viewBtn.textContent = '预览';
-          viewBtn.onclick = () => window.open(`rent-detail.html?stock=${encodeURIComponent(stock)}`, '_blank');
-          wrap.appendChild(viewBtn);
+          const btnView = document.createElement('button');
+          btnView.className = 'px-3 py-1.5 rounded-lg border border-sjgold/40 text-sjgold hover:bg-zinc-900 active:bg-zinc-800 transition';
+          btnView.textContent = '预览';
+          btnView.onclick = () => window.open(`rent-detail.html?stock=${encodeURIComponent(stock)}`, '_blank');
+          wrap.appendChild(btnView);
 
-          tdOps.appendChild(wrap);
-          tr.appendChild(tdOps);
+          if (cFee !== -1) {
+            const btnSave = document.createElement('button');
+            btnSave.className = 'px-3 py-1.5 rounded-lg border border-sjgold/40 text-sjgold hover:bg-zinc-900 active:bg-zinc-800 transition';
+            btnSave.textContent = '保存费率';
+            btnSave.onclick = async () => {
+              const val = feeTd.querySelector('input')?.value ?? '';
+              try {
+                const r = await fetch(`${BACKEND}/update-rent-fee`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ stock, fee: val })
+                });
+                const js = await r.json();
+                if (!r.ok || !js.success) throw new Error(js.error || 'update failed');
+                alert('已更新 OverKmFee');
+              } catch (e) {
+                alert('更新失败：' + e.message);
+              }
+            };
+            wrap.appendChild(btnSave);
+          }
+
+          ops.appendChild(wrap);
+          tr.appendChild(ops);
+
           tbody.appendChild(tr);
         });
       } catch (err) {
@@ -176,7 +225,6 @@
     // Cloudinary 签名上传：第一张 stockmain，其余 stock1、stock2…
     async function uploadImageSigned(stock) {
       if (!stock) { alert('该行没有 StockNumber，无法上传图片'); return; }
-
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*';
@@ -184,7 +232,7 @@
 
       input.onchange = async () => {
         const files = input.files;
-        if (!files || files.length === 0) return;
+        if (!files || !files.length) return;
 
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
@@ -192,7 +240,6 @@
           const publicId = `${stock}/${filename}`;
 
           try {
-            // 取签名
             const signRes = await fetch(`${BACKEND}/get-signature`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -211,17 +258,12 @@
               method: 'POST',
               body: formData
             });
-
             const result = await uploadRes.json();
-            if (result.secure_url) {
-              console.log('✅ 上传成功:', result.secure_url);
-            } else {
-              console.error('❌ 上传失败:', result);
-              alert('上传失败：' + (result.error?.message || '未知错误'));
-            }
+            if (!result.secure_url) throw new Error(result.error?.message || 'upload failed');
           } catch (err) {
-            console.error('❌ 上传异常:', err);
+            console.error('上传异常:', err);
             alert('上传异常：' + err.message);
+            return;
           }
         }
 
@@ -231,7 +273,7 @@
       input.click();
     }
 
-    // 初次加载
+    // 初始化
     loadSheet3();
   </script>
 </body>
