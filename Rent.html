@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SJ Auto - Rent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { sjgold: '#FFD700' },
+          boxShadow: {
+            gold: '0 10px 25px -5px rgba(255,215,0,0.15), 0 8px 10px -6px rgba(255,215,0,0.08)'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-screen bg-black text-sjgold">
+  <!-- Top Navigation -->
+  <header class="sticky top-0 z-10 backdrop-blur bg-black/70 border-b border-sjgold/20">
+    <nav class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-6 text-sm">
+        <a href="index.html" class="opacity-80 hover:opacity-100">Back to Home</a>
+        <a href="buy.html"  class="opacity-60 hover:opacity-100">Buy</a>
+        <a href="sale.html" class="opacity-60 hover:opacity-100">Sell</a>
+        <span class="opacity-100">Rent</span>
+      </div>
+      <div class="text-xs opacity-70">SJ Auto — Premium Rentals</div>
+    </nav>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 md:py-10">
+    <h1 class="text-2xl md:text-3xl font-bold tracking-wide mb-6">Available Rentals</h1>
+    <div id="rent-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+  </main>
+
+  <script>
+    const BACKEND = 'https://flameauto-write.onrender.com';
+    const CLOUD   = 'duwckagtg';
+
+    // 金额格式化
+    const fmtMoney = v => {
+      if (v == null || v === '') return '';
+      const s = String(v).replace(/[^\d.]/g, '');
+      if (!s) return '';
+      const [int, dec=''] = s.split('.');
+      return int.replace(/(\d)(?=(\d{3})+$)/g, '$1,') + (dec ? '.'+dec : '');
+    };
+
+    // Cloudinary：根据 StockNumber 找“带版本”的主图，避免缓存
+    async function fillImageByStock(stock, imgEl) {
+      try {
+        // 复用后端接口，参数名仍用 vin（服务端按前缀搜索）
+        const r = await fetch(`${BACKEND}/cloudinary-search?vin=${encodeURIComponent(stock)}`);
+        const data = await r.json();
+        const items = Array.isArray(data.resources) ? data.resources : [];
+
+        const main = items.find(x => /main$/i.test(x.public_id))
+                  || items.find(x => /\d+$/.test(x.public_id))
+                  || items[0];
+
+        if (main) {
+          const url = `https://res.cloudinary.com/${CLOUD}/image/upload/f_auto,q_auto/v${main.version}/${main.public_id}`;
+          imgEl.src = url;
+        } else {
+          imgEl.src = 'https://placehold.co/800x600/111111/FFD700?text=No+Image';
+        }
+      } catch (e) {
+        console.error('image fetch failed for', stock, e);
+        imgEl.src = 'https://placehold.co/800x600/111111/FFD700?text=No+Image';
+      }
+    }
+
+    async function loadRentals() {
+      try {
+        // 从后端读 Sheet3（避免在前端暴露 Google API Key）
+        const res = await fetch(`${BACKEND}/sheet3`);
+        const { ok, values=[] } = await res.json();
+        if (!ok || !values.length) throw new Error('sheet3 empty');
+
+        const headers = values[0] || [];
+        const body    = values.slice(1);
+
+        const stockIdx   = headers.indexOf('StockNumber');
+        const yearIdx    = headers.indexOf('Year');
+        const brandIdx   = headers.indexOf('Brand');
+        const modelIdx   = headers.indexOf('Model');
+        const trimIdx    = headers.indexOf('Trim');
+        const dayIdx     = headers.indexOf('Price/ day');
+        const weekIdx    = headers.indexOf('Price/Week');
+        const monthIdx   = headers.indexOf('Price/Month');
+        const insIdx     = headers.indexOf('Insurance');
+        const statusIdx  = headers.indexOf('Status');
+
+        const container = document.getElementById('rent-list');
+        container.innerHTML = '';
+
+        body.forEach(row => {
+          const status = (row?.[statusIdx] || '').toLowerCase();
+          if (['unavailable','deleted','sold'].includes(status)) return;
+
+          const stock  = row?.[stockIdx] || '';
+          const year   = row?.[yearIdx]   || '';
+          const brand  = row?.[brandIdx]  || '';
+          const model  = row?.[modelIdx]  || '';
+          const trim   = row?.[trimIdx]   || '';
+          const pDay   = row?.[dayIdx]    || '';
+          const pWeek  = row?.[weekIdx]   || '';
+          const pMonth = row?.[monthIdx]  || '';
+          const ins    = row?.[insIdx]    || '';
+
+          // 卡片
+          const card = document.createElement('article');
+          card.className = `
+            group bg-neutral-950/70 rounded-2xl ring-1 ring-sjgold/15 shadow-gold
+            overflow-hidden flex flex-col hover:ring-sjgold/30 transition
+          `;
+
+          // 顶部图
+          const imgWrap = document.createElement('div');
+          imgWrap.className = 'w-full h-44 sm:h-48 md:h-52 bg-neutral-900 overflow-hidden';
+          const img = document.createElement('img');
+          img.className = 'w-full h-full object-cover group-hover:scale-[1.02] transition';
+          img.alt = `${brand} ${model}`;
+          img.loading = 'lazy';
+          img.decoding = 'async';
+          img.src = 'https://placehold.co/800x600/111111/FFD700?text=Loading...';
+          img.onerror = () => { img.src = 'https://placehold.co/800x600/111111/FFD700?text=No+Image'; };
+          imgWrap.appendChild(img);
+
+          // 信息区（预留底部按钮空间）
+          const bodyBox = document.createElement('div');
+          bodyBox.className = 'relative p-4 pb-16';
+
+          // 标题：年+品牌+车型+Trim
+          const title = document.createElement('h3');
+          title.className = 'text-base md:text-lg font-semibold leading-snug';
+          title.textContent = `${year} ${brand} ${model} ${trim}`.trim();
+
+          // 价格
+          const priceBox = document.createElement('div');
+          priceBox.className = 'mt-2 text-sm space-y-1';
+          const dayLine   = pDay   ? `<div class="text-lg md:text-xl font-bold">CAD $${fmtMoney(pDay)} / day</div>` : '';
+          const weekLine  = pWeek  ? `<div class="opacity-90">CAD $${fmtMoney(pWeek)} / week</div>` : '';
+          const monthLine = pMonth ? `<div class="opacity-90">CAD $${fmtMoney(pMonth)} / month</div>` : '';
+          priceBox.innerHTML = dayLine + weekLine + monthLine;
+
+          // 保险
+          const insEl = document.createElement('div');
+          insEl.className = 'mt-2 text-sm text-sjgold/80';
+          if (ins) insEl.textContent = `Insurance: ${ins}`;
+
+          // 右下角按钮（可改为预定/联系）
+          const btn = document.createElement('button');
+          btn.className = `
+            absolute right-4 bottom-4 inline-flex items-center justify-center
+            h-10 px-4 rounded-xl bg-sjgold text-black font-semibold text-sm
+            whitespace-nowrap hover:brightness-95 active:brightness-90
+            ring-1 ring-sjgold/30 transition
+          `;
+          btn.textContent = 'View Details';
+          btn.onclick = () => window.location.href = `rent-detail.html?stock=${encodeURIComponent(stock)}`;
+
+          bodyBox.appendChild(title);
+          bodyBox.appendChild(priceBox);
+          bodyBox.appendChild(insEl);
+          bodyBox.appendChild(btn);
+
+          card.appendChild(imgWrap);
+          card.appendChild(bodyBox);
+          container.appendChild(card);
+
+          if (stock) fillImageByStock(stock, img);
+        });
+      } catch (err) {
+        console.error('Failed to load rentals:', err);
+        const container = document.getElementById('rent-list');
+        const tip = document.createElement('div');
+        tip.className = 'col-span-full text-center py-12 opacity-80';
+        tip.textContent = 'Failed to load rentals. Please try again later.';
+        container.appendChild(tip);
+      }
+    }
+
+    loadRentals();
+  </script>
+</body>
+</html>
