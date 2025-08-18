@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>租赁详情 - SJ Auto</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { sjgold: '#FFD700' },
+          boxShadow: { gold: '0 10px 25px -5px rgba(255,215,0,0.15), 0 8px 10px -6px rgba(255,215,0,0.08)' }
+        }
+      }
+    }
+  </script>
+  <style>
+    .img-box { width: 960px; height: 540px; overflow: hidden; border-radius: 14px; border: 1px solid rgba(255,215,0,.35); background:#0a0a0a; }
+    .img-box img { width:100%; height:100%; object-fit:cover; }
+    @media (max-width: 1024px) { .img-box { width: 100%; height: 56vw; max-height: 540px; } }
+  </style>
+</head>
+<body class="min-h-screen bg-black text-sjgold">
+<header class="sticky top-0 z-10 backdrop-blur bg-black/70 border-b border-sjgold/20">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <a href="rent.html" class="opacity-80 hover:opacity-100">← 返回租赁</a>
+    <div id="badge" class="text-xs opacity-70"></div>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 py-6 md:py-10">
+  <div class="grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-8 items-start">
+    <!-- 左：图集 -->
+    <section class="md:col-span-3 w-full flex flex-col items-center">
+      <div class="img-box shadow-gold">
+        <img id="mainImg" alt="car" src="https://placehold.co/960x540/111111/FFD700?text=Loading..." />
+      </div>
+      <div class="mt-4 flex gap-4 justify-center">
+        <button class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-sjgold text-black font-medium text-sm hover:brightness-105 active:scale-95"
+                onclick="prevImage()">⬅️ 上一张</button>
+        <button class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-sjgold text-black font-medium text-sm hover:brightness-105 active:scale-95"
+                onclick="nextImage()">下一张 ➡️</button>
+      </div>
+      <div id="thumbs" class="mt-5 grid grid-cols-6 gap-2 w-full"></div>
+    </section>
+
+    <!-- 右：说明 -->
+    <aside class="md:col-span-2 w-full bg-neutral-950/70 rounded-2xl ring-1 ring-sjgold/15 shadow-gold p-5 md:p-6">
+      <h2 id="title" class="text-xl md:text-2xl font-bold mb-3"></h2>
+      <div id="priceBox" class="text-sm space-y-1 mb-4"></div>
+      <ul id="policy" class="space-y-2 text-sjgold/90 text-[15px] leading-relaxed"></ul>
+    </aside>
+  </div>
+</main>
+
+<script>
+  const BACKEND = 'https://flameauto-write.onrender.com';
+  const CLOUD   = 'duwckagtg';
+
+  const qs = new URLSearchParams(location.search);
+  const stock = qs.get('stock') || '';
+  document.getElementById('badge').textContent = stock ? `Stock: ${stock}` : '';
+
+  let imgs = []; let cur = 0;
+
+  async function loadImages() {
+    try {
+      const r = await fetch(`${BACKEND}/cloudinary-search?stock=${encodeURIComponent(stock)}`);
+      const data = await r.json();
+      const items = Array.isArray(data.resources) ? data.resources : [];
+      if (!items.length) throw new Error('no images');
+
+      // 主图优先 *main，然后带数字，最后任意
+      const sorted = items.slice().sort((a,b) => orderKey(a.public_id).localeCompare(orderKey(b.public_id)));
+      imgs = sorted.map(x => x.secure_url || `https://res.cloudinary.com/${CLOUD}/image/upload/f_auto,q_auto/v${x.version}/${x.public_id}`);
+      cur = 0;
+      renderMain();
+      renderThumbs();
+    } catch (e) {
+      console.warn(e);
+      document.getElementById('mainImg').src = 'https://placehold.co/960x540/111111/FFD700?text=No+Image';
+    }
+  }
+  function orderKey(id=''){ const f=id.split('/').pop()||''; if(/main$/i.test(f))return '000_main'; const m=f.match(/(\d+)$/); return m?String(m[1]).padStart(3,'0'):`zzz_${f}` }
+  function renderMain(){ document.getElementById('mainImg').src = imgs[cur] || 'https://placehold.co/960x540/111111/FFD700?text=No+Image'; }
+  function renderThumbs(){
+    const el = document.getElementById('thumbs'); el.innerHTML='';
+    imgs.forEach((u,i)=>{
+      const b=document.createElement('button');
+      b.className='relative aspect-[4/3] w-full overflow-hidden rounded-lg ring-1 ring-white/10 hover:ring-sjgold/40';
+      b.innerHTML=`<img src="${u}" class="w-full h-full object-cover">`;
+      b.onclick=()=>{ cur=i; renderMain(); };
+      el.appendChild(b);
+    });
+  }
+  function nextImage(){ if(!imgs.length) return; cur=(cur+1)%imgs.length; renderMain(); }
+  function prevImage(){ if(!imgs.length) return; cur=(cur-1+imgs.length)%imgs.length; renderMain(); }
+
+  async function loadInfo() {
+    try {
+      const r = await fetch(`${BACKEND}/sheet3`);
+      const { ok, values=[] } = await r.json();
+      if (!ok || !values.length) throw new Error('sheet3 empty');
+
+      const h = values[0] || [];
+      const body = values.slice(1);
+      const idx = {
+        stock: h.indexOf('StockNumber'),
+        year:  h.indexOf('Year'),
+        brand: h.indexOf('Brand'),
+        model: h.indexOf('Model'),
+        trim:  h.indexOf('Trim'),
+        day:   h.indexOf('Price/Day'),
+        week:  h.indexOf('Price/Week'),
+        month: h.indexOf('Price/Month'),
+        ins:   h.indexOf('Insurance'),
+        fee:   h.indexOf('OverKmFee'),
+      };
+
+      const row = body.find(r => String(r[idx.stock]||'').trim() === stock) || [];
+      const title = `${row[idx.year]||''} ${row[idx.brand]||''} ${row[idx.model]||''} ${row[idx.trim]||''}`.trim();
+      document.getElementById('title').textContent = title || stock;
+
+      const priceBox = document.getElementById('priceBox');
+      const fmt = v => v ? String(v).replace(/(\d)(?=(\d{3})+$)/g,'$1,') : '';
+      priceBox.innerHTML = `
+        ${row[idx.day]   ? `<div class="text-lg md:text-xl font-bold">CAD $${fmt(row[idx.day])} / day</div>`:''}
+        ${row[idx.week]  ? `<div class="">CAD $${fmt(row[idx.week])} / week</div>`:''}
+        ${row[idx.month] ? `<div class="">CAD $${fmt(row[idx.month])} / month</div>`:''}
+        ${row[idx.ins]   ? `<div class="opacity-90">Insurance: ${row[idx.ins]}</div>`:''}
+      `;
+
+      const fee = (row[idx.fee] ?? '').toString().trim() || '0.30';
+      renderPolicy(fee);
+    } catch (e) {
+      console.warn(e);
+      renderPolicy('0.30');
+    }
+  }
+
+  function renderPolicy(fee) {
+    const ul = document.getElementById('policy');
+    const lines = [
+      '中国驾照可以租车',
+      '油费自理',
+      '所有价格均为含税价格',
+      '押金支持微信支付',
+      '标准价格包含三者险',
+      '7天北约克万锦送车到家',
+      '日租200km/每天',
+      '周租1000km/周',
+      '月租2800km/月',
+      `超出公里数每公里 ${fee} CAD`,
+      '长租车提供免费保养',
+      '超速和停车罚单由客人承担'
+    ];
+    ul.innerHTML = '';
+    lines.forEach(t => {
+      const li = document.createElement('li');
+      li.className = 'px-3 py-2 bg-neutral-900/70 rounded border border-sjgold/20';
+      li.textContent = t;
+      ul.appendChild(li);
+    });
+  }
+
+  loadImages();
+  loadInfo();
+</script>
+</body>
+</html>
