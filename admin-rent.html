@@ -117,7 +117,7 @@
 
         // 仅当第一行明显是表头时才跳过
         const first = values[0].map(v => String(v || '').trim().toLowerCase());
-        const looksLikeHeader = ['stocknumber','year','brand','model','trim','price/ day','price/week','price/month','insurance','status']
+        const looksLikeHeader = ['stocknumber','year','brand','model','trim','price/Day','price/Week','price/Month','insurance','status']
           .some(k => first.includes(k));
         const rows = looksLikeHeader ? values.slice(1) : values;
         count.textContent = `共 ${rows.length} 条`;
