@@ -19,7 +19,7 @@
     }
   </script>
   <style>
-    /* 固定 header 高度，方便 sticky 表头定位 */
+    /* 固定 header 高度，方便 sticky 表头定位（本页表头直接贴顶，所以不用做偏移） */
     .app-header { height: 64px; }
   </style>
 </head>
@@ -64,8 +64,8 @@
             <col style="width:12rem" />  <!-- 操作 -->
           </colgroup>
 
-          <!-- sticky 表头：top 设为 header 的高度 64px -->
-          <thead class="bg-zinc-900 sticky z-10 border-b border-sjgold/20" style="top:0px;">
+          <!-- 表头紧贴容器上沿：top:0; 并用 margin-top 微调去缝隙 -->
+          <thead class="bg-zinc-900 sticky z-10 border-b border-sjgold/20" style="top:0; margin-top:-1px;">
             <tr class="text-left">
               <th class="px-4 py-3 font-semibold">StockNumber</th>
               <th class="px-4 py-3 font-semibold">Year</th>
@@ -93,6 +93,9 @@
     const BACKEND = 'https://flameauto-write.onrender.com';
     const CLOUDINARY_CLOUD_NAME = 'duwckagtg';
 
+    // 规范化函数：去掉非字母并转小写，用来更稳健地识别“表头”
+    const normalize = (s) => String(s || '').toLowerCase().replace(/[^a-z]/g, '');
+
     // 加载表格（从后端 sheet3 读取）
     async function loadSheet3() {
       try {
@@ -116,9 +119,13 @@
         }
 
         // 仅当第一行明显是表头时才跳过
-        const first = values[0].map(v => String(v || '').trim().toLowerCase());
-        const looksLikeHeader = ['stocknumber','year','brand','model','trim','price/Day','price/Week','price/Month','insurance','status']
-          .some(k => first.includes(k));
+        const firstRow = values[0] || [];
+        const firstNormSet = new Set(firstRow.map(normalize));
+        const headerHints = [
+          'stocknumber','year','brand','model','trim','priceday','priceweek','pricemonth','insurance','status'
+        ];
+        const looksLikeHeader = headerHints.some(h => firstNormSet.has(h));
+
         const rows = looksLikeHeader ? values.slice(1) : values;
         count.textContent = `共 ${rows.length} 条`;
 
