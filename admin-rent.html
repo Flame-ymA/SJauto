@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>SJ Auto · 租赁车辆管理</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- Tailwind CDN（开发/预览用） -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { sjgold: '#FFD700' },
+          boxShadow: {
+            glow: '0 0 0 1px rgba(255,215,0,0.25), 0 10px 25px -5px rgba(0,0,0,0.5)'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* 固定 header 高度，方便 sticky 表头定位 */
+    .app-header { height: 64px; }
+  </style>
+</head>
+<body class="min-h-screen bg-black text-sjgold">
+
+  <!-- 顶部栏（固定高度 64px） -->
+  <header class="app-header sticky top-0 z-20 bg-zinc-950/80 backdrop-blur border-b border-sjgold/30">
+    <div class="max-w-6xl mx-auto h-full px-4 flex items-center justify-between">
+      <h1 class="text-xl md:text-2xl font-semibold tracking-wide">SJ Auto · Admin · 租赁车辆</h1>
+      <div class="flex items-center gap-3">
+        <a href="admin.html"
+           class="px-4 py-2 rounded-xl border border-sjgold/40 text-sjgold hover:bg-zinc-900 active:bg-zinc-800 transition">
+          返回库存管理
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主体 -->
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <div class="rounded-2xl border border-sjgold/30 bg-zinc-950/60 shadow-glow overflow-hidden">
+      <div class="px-5 py-4 border-b border-sjgold/20 flex items-center justify-between">
+        <h2 class="text-lg font-semibold">租赁列表（Sheet3）</h2>
+        <span id="rowCount" class="text-xs text-sjgold/70"></span>
+      </div>
+
+      <!-- 可滚动容器 -->
+      <div class="overflow-auto">
+        <!-- 固定列宽：colgroup + table-fixed -->
+        <table class="min-w-full text-sm table-fixed">
+          <colgroup>
+            <col style="width:10rem" />  <!-- StockNumber -->
+            <col style="width:5.5rem" /> <!-- Year -->
+            <col style="width:7rem" />   <!-- Brand -->
+            <col style="width:8rem" />   <!-- Model -->
+            <col style="width:8rem" />   <!-- Trim -->
+            <col style="width:8rem" />   <!-- Price/day -->
+            <col style="width:8rem" />   <!-- Price/Week -->
+            <col style="width:8rem" />   <!-- Price/Month -->
+            <col style="width:8rem" />   <!-- Insurance -->
+            <col style="width:7rem" />   <!-- Status -->
+            <col style="width:12rem" />  <!-- 操作 -->
+          </colgroup>
+
+          <!-- sticky 表头：top 设为 header 的高度 64px -->
+          <thead class="bg-zinc-900 sticky z-10 border-b border-sjgold/20" style="top:64px;">
+            <tr class="text-left">
+              <th class="px-4 py-3 font-semibold">StockNumber</th>
+              <th class="px-4 py-3 font-semibold">Year</th>
+              <th class="px-4 py-3 font-semibold">Brand</th>
+              <th class="px-4 py-3 font-semibold">Model</th>
+              <th class="px-4 py-3 font-semibold">Trim</th>
+              <th class="px-4 py-3 font-semibold">Price/day</th>
+              <th class="px-4 py-3 font-semibold">Price/Week</th>
+              <th class="px-4 py-3 font-semibold">Price/Month</th>
+              <th class="px-4 py-3 font-semibold">Insurance</th>
+              <th class="px-4 py-3 font-semibold">Status</th>
+              <th class="px-4 py-3 font-semibold text-center">操作</th>
+            </tr>
+          </thead>
+
+          <tbody id="tableBody" class="divide-y divide-sjgold/10">
+            <!-- 行数据由 JS 注入 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const BACKEND = 'https://flameauto-write.onrender.com';
+    const CLOUDINARY_CLOUD_NAME = 'duwckagtg';
+
+    // 加载表格（从后端 sheet3 读取）
+    async function loadSheet3() {
+      try {
+        const res = await fetch(`${BACKEND}/sheet3`);
+        const data = await res.json();
+
+        if (!data.ok) {
+          console.error('Sheet3 读取失败：', data);
+          alert('读取表格失败，稍后重试。');
+          return;
+        }
+
+        const tbody = document.getElementById('tableBody');
+        const count = document.getElementById('rowCount');
+        tbody.innerHTML = '';
+
+        const values = data.values || [];
+        if (!values.length) {
+          count.textContent = '共 0 条';
+          return;
+        }
+
+        // 仅当第一行明显是表头时才跳过
+        const first = values[0].map(v => String(v || '').trim().toLowerCase());
+        const looksLikeHeader = ['stocknumber','year','brand','model','trim','price/ day','price/week','price/month','insurance','status']
+          .some(k => first.includes(k));
+        const rows = looksLikeHeader ? values.slice(1) : values;
+        count.textContent = `共 ${rows.length} 条`;
+
+        rows.forEach((row) => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-zinc-900/60 transition';
+
+          // 依 Sheet3 字段顺序渲染前 10 列
+          const displayCols = [0,1,2,3,4,5,6,7,8,9];
+          displayCols.forEach(colIndex => {
+            const td = document.createElement('td');
+            td.className = 'px-4 py-3 truncate';
+            td.textContent = (row[colIndex] ?? '');
+            tr.appendChild(td);
+          });
+
+          const stock = row[0] || ''; // StockNumber
+          const tdOps = document.createElement('td');
+          tdOps.className = 'px-4 py-3';
+
+          const wrap = document.createElement('div');
+          wrap.className = 'flex justify-center gap-2';
+
+          // 上传图片（签名直传 Cloudinary）
+          const uploadBtn = document.createElement('button');
+          uploadBtn.className = 'w-24 px-3 py-1.5 rounded-lg bg-sjgold text-black font-semibold hover:brightness-95 active:brightness-90 transition';
+          uploadBtn.textContent = 'Upload';
+          uploadBtn.onclick = () => uploadImageSigned(stock);
+          wrap.appendChild(uploadBtn);
+
+          // 预览（跳到租车详情页，可后续实现）
+          const viewBtn = document.createElement('button');
+          viewBtn.className = 'w-24 px-3 py-1.5 rounded-lg border border-sjgold/40 text-sjgold hover:bg-zinc-900 active:bg-zinc-800 transition';
+          viewBtn.textContent = '预览';
+          viewBtn.onclick = () => window.open(`rent-detail.html?stock=${encodeURIComponent(stock)}`, '_blank');
+          wrap.appendChild(viewBtn);
+
+          tdOps.appendChild(wrap);
+          tr.appendChild(tdOps);
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error(err);
+        alert('读取表格失败：' + err.message);
+      }
+    }
+
+    // Cloudinary 签名上传：第一张 stockmain，其余 stock1、stock2…
+    async function uploadImageSigned(stock) {
+      if (!stock) { alert('该行没有 StockNumber，无法上传图片'); return; }
+
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.multiple = true;
+
+      input.onchange = async () => {
+        const files = input.files;
+        if (!files || files.length === 0) return;
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const filename = i === 0 ? `${stock}main` : `${stock}${i}`;
+          const publicId = `${stock}/${filename}`;
+
+          try {
+            // 取签名
+            const signRes = await fetch(`${BACKEND}/get-signature`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ public_id: publicId })
+            });
+            const { signature, timestamp, apiKey } = await signRes.json();
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('api_key', apiKey);
+            formData.append('timestamp', timestamp);
+            formData.append('signature', signature);
+            formData.append('public_id', publicId);
+
+            const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+              method: 'POST',
+              body: formData
+            });
+
+            const result = await uploadRes.json();
+            if (result.secure_url) {
+              console.log('✅ 上传成功:', result.secure_url);
+            } else {
+              console.error('❌ 上传失败:', result);
+              alert('上传失败：' + (result.error?.message || '未知错误'));
+            }
+          } catch (err) {
+            console.error('❌ 上传异常:', err);
+            alert('上传异常：' + err.message);
+          }
+        }
+
+        alert(`✅ 上传完成，共上传 ${files.length} 张图`);
+      };
+
+      input.click();
+    }
+
+    // 初次加载
+    loadSheet3();
+  </script>
+</body>
+</html>
